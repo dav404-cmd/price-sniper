@@ -2,6 +2,9 @@ import asyncio
 from parsel import Selector
 from playwright.async_api import async_playwright
 
+from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF
+
+
 class SlickScraper:
     def __init__(self):
         self.playwright = None
@@ -32,7 +35,7 @@ class SlickScraper:
         url = "https://slickdeals.net/deals/tech/?page=1"
         try:
             await self.page.goto(url, wait_until='domcontentloaded', timeout=60000)
-            await self.page.wait_for_selector("li.bp-p-blueberryDealCard", timeout=15000)
+            await self.page.wait_for_selector(CARDS, timeout=15000)
         except Exception as e:
             print(f"Navigation error: {e}")
             await self.close_browser()
@@ -41,14 +44,14 @@ class SlickScraper:
         html = await self.page.content()
         selector = Selector(text=html)
 
-        deals = selector.css("li.bp-p-blueberryDealCard")
+        deals = selector.css(CARDS)
         for deal in deals[:5]:
-            title = deal.css("a.bp-c-card_title::text").get()
-            price = deal.css("span.bp-p-dealCard_price::text").get()
-            store = deal.css("span.bp-c-card_subtitle::text").get()
-            claimed_orig_price = deal.css("span.bp-p-dealCard_originalPrice::text").get()
+            title = deal.css(TITLE).get()
+            price = deal.css(PRICE).get()
+            store = deal.css(STORE).get()
+            claimed_orig_price = deal.css(ORIGINAL_PRICE).get()
 
-            relative_url = deal.css("a.bp-c-card_title::attr(href)").get()
+            relative_url = deal.css(HREF).get()
             full_url = "https://slickdeals.net" + relative_url if relative_url else None
             print(f"Title: {title}, Price: {price}, Store: {store} , claimed_orig_price : {claimed_orig_price} , url : {full_url}")
 
