@@ -1,9 +1,12 @@
 import asyncio
+
+import pandas as pd
 from parsel import Selector
 from playwright.async_api import async_playwright
+from pathlib import Path
+import os
 
 from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF
-
 
 class SlickScraper:
     def __init__(self):
@@ -31,7 +34,14 @@ class SlickScraper:
             await self.playwright.stop()
 
     async def scraper(self):
+        project_root = Path(__file__).resolve().parents[2]
+        print(f"project_root : {project_root}")
+
+        output_file = project_root / 'data' / 'raw' / 'cate_based_deals.csv'
+        os.makedirs(os.path.dirname(output_file),exist_ok=True)
+
         await self.start_browser()
+
         url = "https://slickdeals.net/deals/tech/?page=1"
         try:
             await self.page.goto(url, wait_until='domcontentloaded', timeout=60000)
@@ -44,20 +54,26 @@ class SlickScraper:
         html = await self.page.content()
         selector = Selector(text=html)
 
-        deals = selector.css(CARDS)
-        for deal in deals[:5]:
-            title = deal.css(TITLE).get()
-            price = deal.css(PRICE).get()
-            store = deal.css(STORE).get()
-            claimed_orig_price = deal.css(ORIGINAL_PRICE).get()
+        jobs = []
 
+        deals = selector.css(CARDS)
+        for deal in deals:
             relative_url = deal.css(HREF).get()
-            full_url = "https://slickdeals.net" + relative_url if relative_url else None
-            print(f"Title: {title}, Price: {price}, Store: {store} , claimed_orig_price : {claimed_orig_price} , url : {full_url}")
+            jobs.append({
+                "title" : deal.css(TITLE).get(),
+                "price" : deal.css(PRICE).get(),
+                "claimed_orig_price": deal.css(ORIGINAL_PRICE).get(),
+                "store" : deal.css(STORE).get(),
+                "url" : "https://slickdeals.net" + relative_url if relative_url else None
+            })
 
         print(len(deals))
-
         await self.close_browser()
+
+        df = pd.DataFrame(jobs)
+        df.to_csv(output_file,index=False)
+        print(f"scraped {len(deals)} deals")
+        print(f"output path : {output_file}")
 
 if __name__ == '__main__':
     scraper = SlickScraper()
