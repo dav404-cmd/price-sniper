@@ -1,4 +1,5 @@
 import asyncio
+from time import sleep
 
 import pandas as pd
 from parsel import Selector
@@ -6,7 +7,7 @@ from playwright.async_api import async_playwright
 from pathlib import Path
 import os
 
-from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF
+from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF,NEXT_BTN
 
 class SlickScraper:
     def __init__(self):
@@ -33,6 +34,25 @@ class SlickScraper:
         if self.playwright:
             await self.playwright.stop()
 
+    async def click_next_btn(self, next_btn_css):
+        try:
+            await self.page.wait_for_selector(next_btn_css, timeout=5000)
+            next_button = await self.page.query_selector(next_btn_css)
+
+            if next_button and await next_button.is_enabled() and await next_button.is_visible():
+                await next_button.scroll_into_view_if_needed()
+                await next_button.click()
+                print("Navigated to next page.")
+                await asyncio.sleep(2)
+                return True
+            else:
+                print("Next button not available or disabled.")
+                return False
+
+        except Exception as e:
+            print(f"Error while trying to click next: {e}")
+            return False
+
     async def scraper(self):
         project_root = Path(__file__).resolve().parents[2]
         print(f"project_root : {project_root}")
@@ -51,28 +71,39 @@ class SlickScraper:
             await self.close_browser()
             return
 
-        html = await self.page.content()
-        selector = Selector(text=html)
+        deals_lis = []
+        deal_count = 0
+        while True:
 
-        jobs = []
+            html = await self.page.content()
+            selector = Selector(text=html)
 
-        deals = selector.css(CARDS)
-        for deal in deals:
-            relative_url = deal.css(HREF).get()
-            jobs.append({
-                "title" : deal.css(TITLE).get(),
-                "price" : deal.css(PRICE).get(),
-                "claimed_orig_price": deal.css(ORIGINAL_PRICE).get(),
-                "store" : deal.css(STORE).get(),
-                "url" : "https://slickdeals.net" + relative_url if relative_url else None
-            })
+            deals = selector.css(CARDS)
+            for deal in deals:
+                relative_url = deal.css(HREF).get()
+                deals_lis.append({
+                    "title" : deal.css(TITLE).get(),
+                    "price" : deal.css(PRICE).get(),
+                    "claimed_orig_price": deal.css(ORIGINAL_PRICE).get(),
+                    "store" : deal.css(STORE).get(),
+                    "url" : "https://slickdeals.net" + relative_url if relative_url else None
+                })
+            deal_count += len(deals)
+            print(f"found {len(deals)} pages")
 
-        print(len(deals))
+            has_next = await self.click_next_btn(NEXT_BTN)
+            if not has_next:
+                print("No more pages.")
+                break
+
+            await asyncio.sleep(2)
+
+        print(deal_count)
         await self.close_browser()
 
-        df = pd.DataFrame(jobs)
+        df = pd.DataFrame(deals_lis)
         df.to_csv(output_file,index=False)
-        print(f"scraped {len(deals)} deals")
+        print(f"scraped {deal_count} deals")
         print(f"output path : {output_file}")
 
 if __name__ == '__main__':
