@@ -1,11 +1,11 @@
 import asyncio
 import pandas as pd
-from parsel import Selector
 from playwright.async_api import async_playwright
 from pathlib import Path
 import os
 
-from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF,NEXT_BTN
+from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES
+from scraper.slickdeals_scraper.by_categories import extract_category_deals
 from sql import DataBase
 
 class SlickScraper:
@@ -32,6 +32,7 @@ class SlickScraper:
             await self.browser.close()
         if self.playwright:
             await self.playwright.stop()
+
     @staticmethod
     def to_float(value):
         try:
@@ -82,7 +83,7 @@ class SlickScraper:
         url = "https://slickdeals.net/deals/tech/?page=1"
         try:
             await self.page.goto(url, wait_until='domcontentloaded', timeout=60000)
-            await self.page.wait_for_selector(CARDS, timeout=15000)
+            await self.page.wait_for_selector(BY_CATEGORIES["CARDS"], timeout=15000)
         except Exception as e:
             print(f"Navigation error: {e}")
             await self.close_browser()
@@ -90,32 +91,13 @@ class SlickScraper:
 
         deals_lis = []
         deal_count = 0
-        while True:
+        while deal_count < 60:
 
-            html = await self.page.content()
-            selector = Selector(text=html)
+            new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
+            deal_count += len(new_deals)
+            print(f"found {len(new_deals)} pages")
 
-            deals = selector.css(CARDS)
-            for deal in deals:
-
-                relative_url = deal.css(HREF).get()
-
-                price = deal.css(PRICE).get()
-                cleaned_price  = self.to_float(price)
-                orig_price = deal.css(ORIGINAL_PRICE).get()
-                cleaned_orig_price = self.to_float(orig_price)
-
-                deals_lis.append({
-                    "title" : deal.css(TITLE).get(),
-                    "price" : cleaned_price,
-                    "claimed_orig_price": cleaned_orig_price,
-                    "store" : deal.css(STORE).get(),
-                    "url" : "https://slickdeals.net" + relative_url if relative_url else None
-                })
-            deal_count += len(deals)
-            print(f"found {len(deals)} pages")
-
-            has_next = await self.click_next_btn(NEXT_BTN)
+            has_next = await self.click_next_btn(BY_CATEGORIES["NEXT_BTN"])
             if not has_next:
                 print("No more pages.")
                 break
