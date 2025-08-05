@@ -1,6 +1,4 @@
 import asyncio
-from time import sleep
-
 import pandas as pd
 from parsel import Selector
 from playwright.async_api import async_playwright
@@ -8,6 +6,7 @@ from pathlib import Path
 import os
 
 from scraper.slickdeals_scraper.slick_xpaths import CARDS,TITLE,PRICE,STORE,ORIGINAL_PRICE,HREF,NEXT_BTN
+from sql import DataBase
 
 class SlickScraper:
     def __init__(self):
@@ -18,7 +17,7 @@ class SlickScraper:
 
     async def start_browser(self):
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=False)
+        self.browser = await self.playwright.chromium.launch(headless=True)
         self.context = await self.browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -33,6 +32,12 @@ class SlickScraper:
             await self.browser.close()
         if self.playwright:
             await self.playwright.stop()
+    @staticmethod
+    def to_float(value):
+        try:
+            return float(str(value).replace("$", "").replace(",", "").strip())
+        except (ValueError, TypeError):
+            return None
 
     async def click_next_btn(self, next_btn_css):
         try:
@@ -69,6 +74,9 @@ class SlickScraper:
         output_file = project_root / 'data' / 'raw' / 'cate_based_deals.csv'
         os.makedirs(os.path.dirname(output_file),exist_ok=True)
 
+        database_path = project_root / "test.db"
+        sql = DataBase(database_path)
+
         await self.start_browser()
 
         url = "https://slickdeals.net/deals/tech/?page=1"
@@ -89,11 +97,18 @@ class SlickScraper:
 
             deals = selector.css(CARDS)
             for deal in deals:
+
                 relative_url = deal.css(HREF).get()
+
+                price = deal.css(PRICE).get()
+                cleaned_price  = self.to_float(price)
+                orig_price = deal.css(ORIGINAL_PRICE).get()
+                cleaned_orig_price = self.to_float(orig_price)
+
                 deals_lis.append({
                     "title" : deal.css(TITLE).get(),
-                    "price" : deal.css(PRICE).get(),
-                    "claimed_orig_price": deal.css(ORIGINAL_PRICE).get(),
+                    "price" : cleaned_price,
+                    "claimed_orig_price": cleaned_orig_price,
                     "store" : deal.css(STORE).get(),
                     "url" : "https://slickdeals.net" + relative_url if relative_url else None
                 })
@@ -109,6 +124,9 @@ class SlickScraper:
 
         print(deal_count)
         await self.close_browser()
+        if deals_lis:
+            sql.insert_dir(deals_lis)
+            sql.close()
 
         df = pd.DataFrame(deals_lis)
         df.to_csv(output_file,index=False)
