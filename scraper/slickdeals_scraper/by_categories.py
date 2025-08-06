@@ -15,10 +15,10 @@ async def extract_category_deals(page, xpath_structure, to_float):
         cleaned_orig_price = to_float(orig_price)
 
         extracted_deals.append({
-            "title": deal.css(xpath_structure["TITLE"]).xpath("string()").get(),
+            "title": deal.css(xpath_structure["TITLE"]).get(),
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
-            "store": deal.css(xpath_structure["STORE"]).xpath("string()").get(),
+            "store": deal.css(xpath_structure["STORE"]).get(),
             "url": "https://slickdeals.net" + relative_url if relative_url else None
         })
 

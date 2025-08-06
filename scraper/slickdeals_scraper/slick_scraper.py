@@ -94,7 +94,10 @@ class SlickScraper:
         while deal_count < 60:
 
             new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
+
             deal_count += len(new_deals)
+            deals_lis.extend(new_deals)
+
             print(f"found {len(new_deals)} pages")
 
             has_next = await self.click_next_btn(BY_CATEGORIES["NEXT_BTN"])
@@ -107,7 +110,7 @@ class SlickScraper:
         print(deal_count)
         await self.close_browser()
         if deals_lis:
-            sql.insert_dir(deals_lis)
+            sql.insert_dicts(deals_lis)
             sql.close()
 
         df = pd.DataFrame(deals_lis)

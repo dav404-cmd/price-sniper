@@ -22,7 +22,7 @@ class DataBase:
         """)
         self.conn.commit()
 
-    def insert_dir(self, cards):
+    def insert_dicts(self, cards):
         self.cursor.executemany("""
             INSERT INTO listings (title, price, claimed_orig_price, store, url)
             VALUES (:title, :price, :claimed_orig_price, :store, :url)
