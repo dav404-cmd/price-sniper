@@ -68,7 +68,7 @@ class SlickScraper:
             print(f"Error while trying to click next: {e}")
             return False
 
-    async def scraper(self):
+    async def scraper(self,is_test = False):
         project_root = Path(__file__).resolve().parents[2]
         print(f"project_root : {project_root}")
 
@@ -76,8 +76,8 @@ class SlickScraper:
         os.makedirs(os.path.dirname(output_file),exist_ok=True)
 
         database_path = project_root / "test.db"
-        sql = DataBase(database_path)
-
+        sql = DataBase(database_path,is_test)
+        print(f"database : {database_path}")
         await self.start_browser()
 
         url = "https://slickdeals.net/deals/tech/?page=1"
@@ -91,7 +91,7 @@ class SlickScraper:
 
         deals_lis = []
         deal_count = 0
-        while deal_count < 60:
+        while deal_count < 100:
 
             new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
 

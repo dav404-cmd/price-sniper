@@ -1,4 +1,5 @@
 from parsel import Selector
+from datetime import datetime
 
 async def extract_category_deals(page, xpath_structure, to_float):
     html = await page.content()
@@ -19,7 +20,8 @@ async def extract_category_deals(page, xpath_structure, to_float):
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
             "store": deal.css(xpath_structure["STORE"]).get(),
-            "url": "https://slickdeals.net" + relative_url if relative_url else None
+            "url": "https://slickdeals.net" + relative_url if relative_url else None,
+            "scraped_at" : datetime.now().isoformat()
         })
 
     return extracted_deals
