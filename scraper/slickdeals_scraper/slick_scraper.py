@@ -6,7 +6,7 @@ import os
 
 from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES
 from scraper.slickdeals_scraper.by_categories import extract_category_deals
-from sql import DataBase
+from manage_db.db_manager import DataBase
 
 class SlickScraper:
     def __init__(self):
@@ -68,16 +68,22 @@ class SlickScraper:
             print(f"Error while trying to click next: {e}")
             return False
 
-    async def scraper(self,is_test = False):
+    async def scraper(self,is_test = True):
+
         project_root = Path(__file__).resolve().parents[2]
-        print(f"project_root : {project_root}")
 
         output_file = project_root / 'data' / 'raw' / 'cate_based_deals.csv'
+        database_path = project_root / "database"
+
         os.makedirs(os.path.dirname(output_file),exist_ok=True)
 
-        database_path = project_root / "test.db"
-        sql = DataBase(database_path,is_test)
-        print(f"database : {database_path}")
+        db_path = database_path / "listing.db"
+        test_db_path = database_path / "test.db"
+
+        output_db = test_db_path if is_test else db_path
+
+        sql = DataBase(output_db,is_test = is_test)
+
         await self.start_browser()
 
         url = "https://slickdeals.net/deals/tech/?page=1"
@@ -91,6 +97,7 @@ class SlickScraper:
 
         deals_lis = []
         deal_count = 0
+
         while deal_count < 100:
 
             new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
@@ -109,9 +116,12 @@ class SlickScraper:
 
         print(deal_count)
         await self.close_browser()
+
         if deals_lis:
             sql.insert_dicts(deals_lis)
             sql.close()
+
+        print(f"database : {output_db}")
 
         df = pd.DataFrame(deals_lis)
         df.to_csv(output_file,index=False)
