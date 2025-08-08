@@ -1,6 +1,5 @@
-from manage_db.db_manager import DataBase
+from db_manager import DataBase
 from pathlib import Path
-
 if __name__ == "__main__":
 
     path = Path(__file__).resolve().parents[1]

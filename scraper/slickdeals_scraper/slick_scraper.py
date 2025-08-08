@@ -9,11 +9,12 @@ from scraper.slickdeals_scraper.by_categories import extract_category_deals
 from manage_db.db_manager import DataBase
 
 class SlickScraper:
-    def __init__(self):
+    def __init__(self,project_root : Path = None):
         self.playwright = None
         self.browser = None
         self.context = None
         self.page = None
+        self.project_root = project_root or Path(__file__).resolve().parents[2]
 
     async def start_browser(self):
         self.playwright = await async_playwright().start()
@@ -68,19 +69,25 @@ class SlickScraper:
             print(f"Error while trying to click next: {e}")
             return False
 
-    async def scraper(self,is_test = True):
+    def get_csv_path(self) -> Path:
+        csv_folder = self.project_root / 'data' / 'raw'
+        output_csv = csv_folder / 'cate_based_deals.csv'
+        return output_csv
 
-        project_root = Path(__file__).resolve().parents[2]
-
-        output_file = project_root / 'data' / 'raw' / 'cate_based_deals.csv'
-        database_path = project_root / "database"
-
-        os.makedirs(os.path.dirname(output_file),exist_ok=True)
+    def get_db_path(self,is_test) -> Path:
+        database_path = self.project_root / "database"
 
         db_path = database_path / "listing.db"
         test_db_path = database_path / "test.db"
 
-        output_db = test_db_path if is_test else db_path
+        return test_db_path if is_test else db_path
+
+    async def scraper(self,is_test = True):
+
+        output_file = self.get_csv_path()
+        os.makedirs(os.path.dirname(output_file),exist_ok=True)
+
+        output_db = self.get_db_path(is_test=is_test)
 
         sql = DataBase(output_db,is_test = is_test)
 
@@ -98,7 +105,7 @@ class SlickScraper:
         deals_lis = []
         deal_count = 0
 
-        while deal_count < 100:
+        while deal_count < 60:
 
             new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
 

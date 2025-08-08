@@ -49,8 +49,4 @@ class DataBase:
         self.conn.commit()
 
 
-if __name__ == '__main__':
-    sql = DataBase("test.db")
-    sql.create_table()
-    sql.close()
 
