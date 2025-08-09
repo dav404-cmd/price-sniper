@@ -1,7 +1,7 @@
 from parsel import Selector
 from datetime import datetime
 
-async def go_to_url(page,close_browser,xpath_structure):
+async def go_to_url(page,xpath_structure,close_browser):
     url = "https://slickdeals.net/search?q=gaming+laptop&filters[display][]=hideExpired"
     try:
         await page.goto(url, wait_until='domcontentloaded', timeout=60000)
@@ -12,8 +12,6 @@ async def go_to_url(page,close_browser,xpath_structure):
         return
 
 async def extract_search_deals(page, xpath_structure, to_float):
-
-
     html = await page.content()
     selector = Selector(text=html)
 

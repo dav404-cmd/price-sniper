@@ -4,8 +4,9 @@ from playwright.async_api import async_playwright
 from pathlib import Path
 import os
 
-from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES
-from scraper.slickdeals_scraper.by_categories import extract_category_deals
+from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
+from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page
+from scraper.slickdeals_scraper.by_search import extract_search_deals , go_to_url
 from manage_db.db_manager import DataBase
 
 class SlickScraper:
@@ -18,7 +19,7 @@ class SlickScraper:
 
     async def start_browser(self):
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=True)
+        self.browser = await self.playwright.chromium.launch(headless=False)
         self.context = await self.browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -98,23 +99,16 @@ class SlickScraper:
             sql.close()
         print(f"database : {output_db}")
 
-    async def scraper(self,is_test = True):
+    async def scrape_by_categories(self,is_test = True):
 
         await self.start_browser()
 
-        url = "https://slickdeals.net/deals/tech/?page=1"
-        try:
-            await self.page.goto(url, wait_until='domcontentloaded', timeout=60000)
-            await self.page.wait_for_selector(BY_CATEGORIES["CARDS"], timeout=15000)
-        except Exception as e:
-            print(f"Navigation error: {e}")
-            await self.close_browser()
-            return
+        await go_to_page(page=self.page,xpath_structure=BY_CATEGORIES,close_browser=self.close_browser)
 
         deals_lis = []
         deal_count = 0
 
-        while deal_count < 60:
+        while deal_count < 120:
 
             new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
 
@@ -138,6 +132,35 @@ class SlickScraper:
         print(f"scraped {deal_count} listing")
         self.store_csv(deals_lis)
 
+    async def scrape_by_search(self,is_test = True):
+
+        await self.start_browser()
+
+        await go_to_url(page=self.page,xpath_structure=BY_SEARCH,close_browser=self.close_browser)
+
+        deals_lis = []
+        deal_count = 0
+
+
+
+        new_deals = await extract_search_deals(self.page,BY_SEARCH,self.to_float)
+
+        deal_count += len(new_deals)
+        deals_lis.extend(new_deals)
+
+        print(f"found {len(new_deals)} pages")
+
+        await asyncio.sleep(2)
+
+        print(deal_count)
+        await self.close_browser()
+
+        self.store_db(deals_lis,is_test = is_test)
+
+        print(f"scraped {deal_count} listing")
+        self.store_csv(deals_lis)
+
+
 if __name__ == '__main__':
     scraper = SlickScraper()
-    asyncio.run(scraper.scraper())
+    asyncio.run(scraper.scrape_by_search(is_test=True))

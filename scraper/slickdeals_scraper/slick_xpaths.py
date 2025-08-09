@@ -12,10 +12,10 @@ BY_CATEGORIES = {
 }
 
 BY_SEARCH = {
-    "CARDS": "a.dealCardListViewMobile__title.dealCardListViewMobile__title--underline",
-    "HREF": "a.dealTitleLink::attr(href)",
-    "PRICE": "span.price::text",
-    "ORIGINAL_PRICE": "span.priceStrikeThrough::text",
-    "TITLE": "a.dealTitleLink::text",
-    "STORE": "span.dealMerchantName::text",
+    "CARDS": "div.dealCardListView",
+    "TITLE": "a.dealCardListView__title--underline::text",
+    "PRICE": "span.dealCardListView__finalPrice::text",
+    "ORIGINAL_PRICE": "span.dealCardListView__listPrice::text",
+    "STORE": "div.dealCardListView__store::text",
+    "HREF": "a.dealCardListView__title--underline::attr(href)",
 }

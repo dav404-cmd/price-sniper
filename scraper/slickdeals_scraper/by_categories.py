@@ -1,6 +1,16 @@
 from parsel import Selector
 from datetime import datetime
 
+async def go_to_page(page,xpath_structure,close_browser):
+    url = "https://slickdeals.net/deals/tech/?page=1"
+    try:
+        await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+        await page.wait_for_selector(xpath_structure["CARDS"], timeout=15000)
+    except Exception as e:
+        print(f"Navigation error: {e}")
+        await close_browser()
+        return
+
 async def extract_category_deals(page, xpath_structure, to_float):
     html = await page.content()
     selector = Selector(text=html)
