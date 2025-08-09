@@ -1,8 +1,9 @@
 from parsel import Selector
 from datetime import datetime
 
-async def go_to_url(page,xpath_structure,close_browser):
-    url = "https://slickdeals.net/search?q=gaming+laptop&filters[display][]=hideExpired"
+async def go_to_url(page,xpath_structure,close_browser,query):
+    query_clean = query.replace(" ","+")
+    url = f"https://slickdeals.net/search?q={query_clean}&filters[display][]=hideExpired"
     try:
         await page.goto(url, wait_until='domcontentloaded', timeout=60000)
         await page.wait_for_selector(xpath_structure["CARDS"], timeout=15000)

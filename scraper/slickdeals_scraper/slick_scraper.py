@@ -19,7 +19,7 @@ class SlickScraper:
 
     async def start_browser(self):
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=False)
+        self.browser = await self.playwright.chromium.launch(headless=True)
         self.context = await self.browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -99,11 +99,11 @@ class SlickScraper:
             sql.close()
         print(f"database : {output_db}")
 
-    async def scrape_by_categories(self,is_test = True):
+    async def scrape_by_categories(self,is_test = True,category = "tech"):
 
         await self.start_browser()
 
-        await go_to_page(page=self.page,xpath_structure=BY_CATEGORIES,close_browser=self.close_browser)
+        await go_to_page(page=self.page,xpath_structure=BY_CATEGORIES,close_browser=self.close_browser ,category=category)
 
         deals_lis = []
         deal_count = 0
@@ -132,11 +132,11 @@ class SlickScraper:
         print(f"scraped {deal_count} listing")
         self.store_csv(deals_lis)
 
-    async def scrape_by_search(self,is_test = True):
+    async def scrape_by_search(self,is_test = True,query = "gaming laptop"):
 
         await self.start_browser()
 
-        await go_to_url(page=self.page,xpath_structure=BY_SEARCH,close_browser=self.close_browser)
+        await go_to_url(page=self.page,xpath_structure=BY_SEARCH,close_browser=self.close_browser,query=query)
 
         deals_lis = []
         deal_count = 0
@@ -160,7 +160,13 @@ class SlickScraper:
         print(f"scraped {deal_count} listing")
         self.store_csv(deals_lis)
 
+def run_by_categories():
+    scraper = SlickScraper()
+    asyncio.run(scraper.scrape_by_categories(is_test=True,category="tech"))
+
+def run_by_search():
+    scraper = SlickScraper()
+    asyncio.run(scraper.scrape_by_search(is_test=True,query="rtx 5080"))
 
 if __name__ == '__main__':
-    scraper = SlickScraper()
-    asyncio.run(scraper.scrape_by_search(is_test=True))
+    run_by_search()

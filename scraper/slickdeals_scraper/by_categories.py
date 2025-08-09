@@ -1,8 +1,8 @@
 from parsel import Selector
 from datetime import datetime
 
-async def go_to_page(page,xpath_structure,close_browser):
-    url = "https://slickdeals.net/deals/tech/?page=1"
+async def go_to_page(page,xpath_structure,close_browser,category):
+    url = f"https://slickdeals.net/deals/{category}/?page=1"
     try:
         await page.goto(url, wait_until='domcontentloaded', timeout=60000)
         await page.wait_for_selector(xpath_structure["CARDS"], timeout=15000)
