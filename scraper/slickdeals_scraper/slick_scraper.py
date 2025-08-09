@@ -69,6 +69,7 @@ class SlickScraper:
             print(f"Error while trying to click next: {e}")
             return False
 
+    #[data storing]
     def get_csv_path(self) -> Path:
         csv_folder = self.project_root / 'data' / 'raw'
         output_csv = csv_folder / 'cate_based_deals.csv'
@@ -82,14 +83,22 @@ class SlickScraper:
 
         return test_db_path if is_test else db_path
 
-    async def scraper(self,is_test = True):
-
+    def store_csv(self,deals_lis):
         output_file = self.get_csv_path()
-        os.makedirs(os.path.dirname(output_file),exist_ok=True)
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        df = pd.DataFrame(deals_lis)
+        df.to_csv(output_file, index=False)
+        print(f"output path : {output_file}")
 
+    def store_db(self,deals_lis,is_test):
         output_db = self.get_db_path(is_test=is_test)
+        sql = DataBase(output_db, is_test=is_test)
+        if deals_lis:
+            sql.insert_dicts(deals_lis)
+            sql.close()
+        print(f"database : {output_db}")
 
-        sql = DataBase(output_db,is_test = is_test)
+    async def scraper(self,is_test = True):
 
         await self.start_browser()
 
@@ -124,16 +133,10 @@ class SlickScraper:
         print(deal_count)
         await self.close_browser()
 
-        if deals_lis:
-            sql.insert_dicts(deals_lis)
-            sql.close()
+        self.store_db(deals_lis,is_test = is_test)
 
-        print(f"database : {output_db}")
-
-        df = pd.DataFrame(deals_lis)
-        df.to_csv(output_file,index=False)
-        print(f"scraped {deal_count} deals")
-        print(f"output path : {output_file}")
+        print(f"scraped {deal_count} listing")
+        self.store_csv(deals_lis)
 
 if __name__ == '__main__':
     scraper = SlickScraper()
