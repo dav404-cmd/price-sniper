@@ -110,7 +110,7 @@ class SlickScraper:
 
         while deal_count < 120:
 
-            new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float)
+            new_deals = await extract_category_deals(self.page,BY_CATEGORIES,self.to_float,category = category)
 
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)

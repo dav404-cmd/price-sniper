@@ -11,7 +11,7 @@ async def go_to_page(page,xpath_structure,close_browser,category):
         await close_browser()
         return
 
-async def extract_category_deals(page, xpath_structure, to_float):
+async def extract_category_deals(page, xpath_structure, to_float , category:str):
     html = await page.content()
     selector = Selector(text=html)
 
@@ -30,6 +30,7 @@ async def extract_category_deals(page, xpath_structure, to_float):
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
             "store": deal.css(xpath_structure["STORE"]).get(),
+            "category" : category,
             "url": "https://slickdeals.net" + relative_url if relative_url else None,
             "scraped_at" : datetime.now().isoformat()
         })

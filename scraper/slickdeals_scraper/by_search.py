@@ -31,6 +31,7 @@ async def extract_search_deals(page, xpath_structure, to_float):
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
             "store": deal.css(xpath_structure["STORE"]).get(),
+            "category" : None,
             "url": "https://slickdeals.net" + relative_url if relative_url else None,
             "scraped_at" : datetime.now().isoformat()
         })
