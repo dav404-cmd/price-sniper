@@ -1,5 +1,6 @@
 from parsel import Selector
 from datetime import datetime
+import asyncio
 
 async def go_to_page(page,xpath_structure,close_browser,category):
     url = f"https://slickdeals.net/deals/{category}/?page=1"
@@ -36,3 +37,32 @@ async def extract_category_deals(page, xpath_structure, to_float , category:str)
         })
 
     return extracted_deals
+
+
+async def click_next_btn(page,next_btn_css):
+    try:
+        await page.wait_for_selector(next_btn_css, timeout=5000)
+        next_button = await page.query_selector(next_btn_css)
+
+        # Get parent div
+        parent = await next_button.evaluate_handle("node => node.parentElement")
+        parent_class = await parent.get_property("className")
+        parent_class_value = await parent_class.json_value()
+
+        if "bp-c-pagination_ends--disabled" in parent_class_value:
+            print("Next button is disabled based on parent class.")
+            return False
+
+        if next_button and await next_button.is_enabled() and await next_button.is_visible():
+            await next_button.scroll_into_view_if_needed()
+            await next_button.click()
+            print("Navigated to next page.")
+            await asyncio.sleep(2)
+            return True
+        else:
+            print("Next button not available or disabled.")
+            return False
+
+    except Exception as e:
+        print(f"Error while trying to click next: {e}")
+        return False

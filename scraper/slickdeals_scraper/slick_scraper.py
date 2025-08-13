@@ -5,8 +5,8 @@ from pathlib import Path
 import os
 
 from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
-from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page
-from scraper.slickdeals_scraper.by_search import extract_search_deals , go_to_url
+from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
+from scraper.slickdeals_scraper.by_search import extract_search_deals , go_to_url , next_btn_search
 from manage_db.db_manager import DataBase
 
 class SlickScraper:
@@ -41,34 +41,6 @@ class SlickScraper:
             return float(str(value).replace("$", "").replace(",", "").strip())
         except (ValueError, TypeError):
             return None
-
-    async def click_next_btn(self, next_btn_css):
-        try:
-            await self.page.wait_for_selector(next_btn_css, timeout=5000)
-            next_button = await self.page.query_selector(next_btn_css)
-
-            # Get parent div
-            parent = await next_button.evaluate_handle("node => node.parentElement")
-            parent_class = await parent.get_property("className")
-            parent_class_value = await parent_class.json_value()
-
-            if "bp-c-pagination_ends--disabled" in parent_class_value:
-                print("Next button is disabled based on parent class.")
-                return False
-
-            if next_button and await next_button.is_enabled() and await next_button.is_visible():
-                await next_button.scroll_into_view_if_needed()
-                await next_button.click()
-                print("Navigated to next page.")
-                await asyncio.sleep(2)
-                return True
-            else:
-                print("Next button not available or disabled.")
-                return False
-
-        except Exception as e:
-            print(f"Error while trying to click next: {e}")
-            return False
 
     #[data storing]
     def get_csv_path(self) -> Path:
@@ -117,7 +89,7 @@ class SlickScraper:
 
             print(f"found {len(new_deals)} pages")
 
-            has_next = await self.click_next_btn(BY_CATEGORIES["NEXT_BTN"])
+            has_next = await click_next_btn(self.page,next_btn_css=BY_CATEGORIES["NEXT_BTN"])
             if not has_next:
                 print("No more pages.")
                 break
@@ -141,14 +113,20 @@ class SlickScraper:
         deals_lis = []
         deal_count = 0
 
+        while True:
 
+            new_deals = await extract_search_deals(self.page,BY_SEARCH,self.to_float)
 
-        new_deals = await extract_search_deals(self.page,BY_SEARCH,self.to_float)
+            deal_count += len(new_deals)
+            deals_lis.extend(new_deals)
 
-        deal_count += len(new_deals)
-        deals_lis.extend(new_deals)
+            print(f"found {len(new_deals)} pages")
 
-        print(f"found {len(new_deals)} pages")
+            async with self.page.expect_navigation():
+                has_next = await next_btn_search()
+                if not has_next:
+                    print("No more pages.")
+                    break
 
         await asyncio.sleep(2)
 
@@ -166,7 +144,7 @@ def run_by_categories():
 
 def run_by_search():
     scraper = SlickScraper()
-    asyncio.run(scraper.scrape_by_search(is_test=True,query="rtx 5080"))
+    asyncio.run(scraper.scrape_by_search(is_test=True,query="iphone"))
 
 if __name__ == '__main__':
-    run_by_search()
+    run_by_categories()

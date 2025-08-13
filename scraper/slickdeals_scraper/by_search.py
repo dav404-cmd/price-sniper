@@ -37,3 +37,6 @@ async def extract_search_deals(page, xpath_structure, to_float):
         })
 
     return extracted_deals
+
+async def next_btn_search():
+    pass
