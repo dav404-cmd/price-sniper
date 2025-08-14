@@ -6,7 +6,7 @@ import os
 
 from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
 from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
-from scraper.slickdeals_scraper.by_search import extract_search_deals , go_to_url , next_btn_search
+from scraper.slickdeals_scraper.by_search import extract_search_deals
 from manage_db.db_manager import DataBase
 
 class SlickScraper:
@@ -104,39 +104,38 @@ class SlickScraper:
         print(f"scraped {deal_count} listing")
         self.store_csv(deals_lis)
 
-    async def scrape_by_search(self,is_test = True,query = "gaming laptop"):
-
+    async def scrape_by_search(self, is_test=True, query="iphone", total_pages=5):
         await self.start_browser()
 
-        await go_to_url(page=self.page,xpath_structure=BY_SEARCH,close_browser=self.close_browser,query=query)
+        query_clean = query.replace(" ", "+")
+        base_url = f"https://slickdeals.net/search?q={query_clean}&filters[display][]=hideExpired&page="
 
         deals_lis = []
         deal_count = 0
 
-        while True:
+        for page_num in range(1, total_pages + 1):
+            url = base_url + str(page_num)
+            print(f"Scraping page {page_num}: {url}")
+            try:
+                await self.page.goto(url, wait_until="domcontentloaded", timeout=90000)
+                await self.page.wait_for_selector(BY_SEARCH["CARDS"], timeout=15000)
+            except Exception as e:
+                print(f"Error loading page {page_num}: {e}")
+                continue  # skip to next page, browser stays alive
 
-            new_deals = await extract_search_deals(self.page,BY_SEARCH,self.to_float)
-
+            new_deals = await extract_search_deals(self.page, BY_SEARCH, self.to_float)
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)
 
-            print(f"found {len(new_deals)} pages")
+            print(f"Found {len(new_deals)} deals on page {page_num}")
+            await asyncio.sleep(2)
 
-            async with self.page.expect_navigation():
-                has_next = await next_btn_search()
-                if not has_next:
-                    print("No more pages.")
-                    break
-
-        await asyncio.sleep(2)
-
-        print(deal_count)
         await self.close_browser()
 
-        self.store_db(deals_lis,is_test = is_test)
-
-        print(f"scraped {deal_count} listing")
+        print(f"Total scraped listings: {deal_count}")
+        self.store_db(deals_lis, is_test=is_test)
         self.store_csv(deals_lis)
+
 
 def run_by_categories():
     scraper = SlickScraper()
@@ -147,4 +146,4 @@ def run_by_search():
     asyncio.run(scraper.scrape_by_search(is_test=True,query="iphone"))
 
 if __name__ == '__main__':
-    run_by_categories()
+    run_by_search()

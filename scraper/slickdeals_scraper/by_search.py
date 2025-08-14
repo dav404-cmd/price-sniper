@@ -1,17 +1,6 @@
 from parsel import Selector
 from datetime import datetime
 
-async def go_to_url(page,xpath_structure,close_browser,query):
-    query_clean = query.replace(" ","+")
-    url = f"https://slickdeals.net/search?q={query_clean}&filters[display][]=hideExpired"
-    try:
-        await page.goto(url, wait_until='domcontentloaded', timeout=60000)
-        await page.wait_for_selector(xpath_structure["CARDS"], timeout=15000)
-    except Exception as e:
-        print(f"Navigation error: {e}")
-        await close_browser()
-        return
-
 async def extract_search_deals(page, xpath_structure, to_float):
     html = await page.content()
     selector = Selector(text=html)
@@ -32,11 +21,9 @@ async def extract_search_deals(page, xpath_structure, to_float):
             "claimed_orig_price": cleaned_orig_price,
             "store": deal.css(xpath_structure["STORE"]).get(),
             "category" : None,
+            "time_stamp" : None,
             "url": "https://slickdeals.net" + relative_url if relative_url else None,
             "scraped_at" : datetime.now().isoformat()
         })
 
     return extracted_deals
-
-async def next_btn_search():
-    pass

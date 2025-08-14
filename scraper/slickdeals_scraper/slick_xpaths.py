@@ -18,6 +18,4 @@ BY_SEARCH = {
     "ORIGINAL_PRICE": "span.dealCardListView__listPrice::text",
     "STORE": "div.dealCardListView__store::text",
     "HREF": "a.dealCardListView__title--underline::attr(href)",
-    "NEXT_BTN" : "a.slickdealsPagination__pageIcon"
-
 }
