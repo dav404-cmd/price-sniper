@@ -3,7 +3,6 @@ import pandas as pd
 from playwright.async_api import async_playwright
 from pathlib import Path
 import os
-import re
 
 from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
 from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
@@ -124,18 +123,7 @@ class SlickScraper:
                     print("No card found — stopping scraper.")
                     await self.close_browser()
                     return
-
-                result_count_text = await self.page.locator(BY_SEARCH["RESULT_COUNT"]).inner_text()
-                match = re.search(r'\((\d+)\)', result_count_text)
-                if match:
-                    count = int(match.group(1))
-                    print(f"Results: {count}")
-                    if count == 0:
-                        print("No results — stopping scraper.")
-                        await self.close_browser()
-                        return  # stop everything
-                else:
-                    print("Could not parse results count.")
+                await asyncio.sleep(0.6)
 
             except Exception as e:
                 print(f"Error loading page {page_num}: {e}")
@@ -164,4 +152,4 @@ def run_by_search():
     asyncio.run(scraper.scrape_by_search(is_test=True,query="iphone"))
 
 if __name__ == '__main__':
-    run_by_search()
+    run_by_categories()

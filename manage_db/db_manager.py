@@ -22,6 +22,7 @@ class DataBase:
             title TEXT,
             price REAL,
             claimed_orig_price REAL,
+            discount_percentage REAL,
             store TEXT,
             category TEXT,
             time_stamp TEXT,
@@ -34,8 +35,8 @@ class DataBase:
     def insert_dicts(self, cards):
         print("Inserting", len(cards), "rows")
         self.cursor.executemany("""
-            INSERT INTO listings (title, price, claimed_orig_price, store, category, time_stamp, url, scraped_at)
-            VALUES (:title, :price, :claimed_orig_price, :store, :category, :time_stamp, :url, :scraped_at)
+            INSERT INTO listings (title, price, claimed_orig_price, discount_percentage, store, category, time_stamp, url, scraped_at)
+            VALUES (:title, :price, :claimed_orig_price, :discount_percentage, :store, :category, :time_stamp, :url, :scraped_at)
         """, cards)
         self.conn.commit()
 

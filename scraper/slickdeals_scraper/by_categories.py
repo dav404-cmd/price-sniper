@@ -26,10 +26,18 @@ async def extract_category_deals(page, xpath_structure, to_float , category:str)
         orig_price = deal.css(xpath_structure["ORIGINAL_PRICE"]).get()
         cleaned_orig_price = to_float(orig_price)
 
+        if cleaned_orig_price is None or cleaned_price is None:
+            continue
+        discount = cleaned_orig_price - cleaned_price
+        discount_percentage = (discount/cleaned_orig_price)*100
+        formatted = f"{discount_percentage:.2f}"
+        float_discount = to_float(formatted)
+
         extracted_deals.append({
             "title": deal.css(xpath_structure["TITLE"]).get(),
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
+            "discount_percentage":float_discount,
             "store": deal.css(xpath_structure["STORE"]).get(),
             "category" : category,
             "time_stamp": deal.css(xpath_structure["TIME_STAMP"]).get(),
