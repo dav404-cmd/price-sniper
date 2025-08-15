@@ -3,6 +3,7 @@ import pandas as pd
 from playwright.async_api import async_playwright
 from pathlib import Path
 import os
+import re
 
 from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
 from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
@@ -118,7 +119,24 @@ class SlickScraper:
             print(f"Scraping page {page_num}: {url}")
             try:
                 await self.page.goto(url, wait_until="domcontentloaded", timeout=90000)
-                await self.page.wait_for_selector(BY_SEARCH["CARDS"], timeout=15000)
+                cards = await self.page.query_selector(BY_SEARCH["CARDS"])
+                if not cards:
+                    print("No card found — stopping scraper.")
+                    await self.close_browser()
+                    return
+
+                result_count_text = await self.page.locator(BY_SEARCH["RESULT_COUNT"]).inner_text()
+                match = re.search(r'\((\d+)\)', result_count_text)
+                if match:
+                    count = int(match.group(1))
+                    print(f"Results: {count}")
+                    if count == 0:
+                        print("No results — stopping scraper.")
+                        await self.close_browser()
+                        return  # stop everything
+                else:
+                    print("Could not parse results count.")
+
             except Exception as e:
                 print(f"Error loading page {page_num}: {e}")
                 continue  # skip to next page, browser stays alive

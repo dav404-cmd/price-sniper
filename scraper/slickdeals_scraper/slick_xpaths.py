@@ -18,4 +18,5 @@ BY_SEARCH = {
     "ORIGINAL_PRICE": "span.dealCardListView__listPrice::text",
     "STORE": "div.dealCardListView__store::text",
     "HREF": "a.dealCardListView__title--underline::attr(href)",
+    "RESULT_COUNT":'//h1[@class="searchPage__headline"]'
 }
