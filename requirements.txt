@@ -1,3 +1,5 @@
 playwright
 pandas
 parsel
+pyqt5
+qasync
