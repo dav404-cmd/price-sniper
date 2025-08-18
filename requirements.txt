@@ -1,5 +1,10 @@
 playwright
 pandas
 parsel
+requests
+beautifulsoup4
+lxml
+streamlit
+
 pyqt5
 qasync
