@@ -1,45 +1,28 @@
-import sys, asyncio
+import pandas as pd
+import streamlit as st
+import sqlite3
+from scraper.scraper_runner_bs4 import run_by_categories, run_by_search
 
-# Set Windows selector policy BEFORE importing Playwright
-if sys.platform.startswith("win"):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+st.set_page_config(layout="wide")
+# todo : add Test mode toggle
+test_mode = True
+db_path = "database/listing.db"
+db_path_test = "database/test.db"
+use_file = db_path_test if test_mode else db_path
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QPlainTextEdit
-from qasync import QEventLoop, asyncSlot
+st.header("Price Sniper")
+product = st.text_input("Product name..", "iphone")
 
-from scraper.scraper_runner import run_by_categories  # must be async
+# Run scraper button with a unique key
+if st.button("Start Scraper", key="start_scraper"):
+    run_by_search(is_test = True,query = product)  # todo : setup select box for run_by_test and run_by_category
+    st.success("Scraper has finished running!")
 
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("PyQt5 + Playwright (async)")
-        self.log = QPlainTextEdit(readOnly=True)
-        self.btn = QPushButton("Run scrape")
-        self.btn.clicked.connect(self.start_scrape)
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.log)
-        layout.addWidget(self.btn)
+conn = sqlite3.connect(use_file)
+df = pd.read_sql_query("SELECT * FROM listings", conn)
 
-    @asyncSlot()
-    async def start_scrape(self):
-        self.btn.setEnabled(False)
-        self.log.appendPlainText("Starting...")
-        try:
-            await run_by_categories()
-            self.log.appendPlainText("Done.")
-        except Exception as e:
-            self.log.appendPlainText(f"Error: {e!r}")
-        finally:
-            self.btn.setEnabled(True)
+tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage"]]
 
-def main():
-    app = QApplication(sys.argv)
-    loop = QEventLoop(app)
-    asyncio.set_event_loop(loop)
-    w = MainWindow()
-    w.show()
-    with loop:
-        loop.run_forever()
-
-if __name__ == "__main__":
-    main()
+st.subheader("Great deals.")
+st.dataframe(tables,use_container_width=True, height=500)
+conn.close()

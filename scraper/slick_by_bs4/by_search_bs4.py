@@ -23,7 +23,7 @@ def extract_search_deals(to_float, html: str, xpath_structure: dict):
         orig_price_tag = deal.select_one("span.dealCardListView__listPrice")
         cleaned_orig_price = to_float(orig_price_tag.get_text()) if orig_price_tag else None
 
-        if cleaned_price is None or cleaned_orig_price is None:
+        if cleaned_price is None or cleaned_orig_price is None or cleaned_orig_price == 0:
             continue
 
         discount = cleaned_orig_price - cleaned_price

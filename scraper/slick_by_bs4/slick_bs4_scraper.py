@@ -91,24 +91,30 @@ class SlickScraperBs4:
         self.store_db(deals_lis, is_test=is_test)
         self.store_csv(deals_lis)
 
-    def scrape_by_search(self, is_test=True, query="iphone", total_pages=5):
+    def scrape_by_search(self, is_test=True, query="iphone", max_pages=50):
         query_clean = query.replace(" ", "+")
         base_url = f"https://slickdeals.net/search?q={query_clean}&filters[display][]=hideExpired&page="
 
         deals_lis, deal_count = [], 0
+        page_num = 1
 
-        for page_num in range(1, total_pages + 1):
+        while page_num <= max_pages:  # failsafe max_pages
             url = base_url + str(page_num)
             print(f"Scraping page {page_num}: {url}")
             html = self.get_page_html(url)
             if not html:
-                continue
+                break
 
-            new_deals = extract_search_deals(self.to_float,html, BY_SEARCH)
+            new_deals = extract_search_deals(self.to_float, html, BY_SEARCH)
+            if not new_deals:  # ^ Stop if no deals are found
+                print("No more deals found, stopping.")
+                break
+
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)
-
             print(f"→ Found {len(new_deals)} deals on page {page_num}")
+
+            page_num += 1
             time.sleep(2)
 
         print(f"* Total scraped listings: {deal_count}")

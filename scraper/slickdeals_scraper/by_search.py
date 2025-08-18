@@ -15,7 +15,7 @@ async def extract_search_deals(page, xpath_structure, to_float):
         orig_price = deal.css(xpath_structure["ORIGINAL_PRICE"]).get()
         cleaned_orig_price = to_float(orig_price)
 
-        if cleaned_price is None or cleaned_orig_price is None:
+        if cleaned_price is None or cleaned_orig_price is None or cleaned_orig_price == 0:
             continue
         discount = cleaned_orig_price - cleaned_price
         discount_percentage = (discount/cleaned_orig_price)*100
