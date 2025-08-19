@@ -1,5 +1,10 @@
 from db_manager import DataBase
 from pathlib import Path
+
+from utils.logger import get_logger
+
+db_helper_log = get_logger("DB_helper")
+
 if __name__ == "__main__":
 
     path = Path(__file__).resolve().parents[1]
@@ -10,4 +15,4 @@ if __name__ == "__main__":
     db.delete_all()
     db.close()
 
-    print(f"Deleted all records from: {db_path}")
+    db_helper_log.critical(f"Deleted all records from: {test_db_path}")

@@ -7,6 +7,9 @@ import time
 from scraper.slick_by_bs4.slick_xpaths import BY_CATEGORIES, BY_SEARCH
 from scraper.slick_by_bs4.by_category_bs4 import extract_category_deals
 from scraper.slick_by_bs4.by_search_bs4 import extract_search_deals
+from utils.logger import get_logger
+
+slick_log = get_logger("Slick_bs4_scraper")
 
 from manage_db.db_manager import DataBase
 
@@ -45,7 +48,7 @@ class SlickScraperBs4:
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         df = pd.DataFrame(deals_lis)
         df.to_csv(output_file, index=False)
-        print(f"CSV saved → {output_file}")
+        slick_log.info(f"CSV saved → {output_file}")
 
     def store_db(self, deals_lis, is_test):
         output_db = self.get_db_path(is_test=is_test)
@@ -53,7 +56,7 @@ class SlickScraperBs4:
         if deals_lis:
             sql.insert_dicts(deals_lis)
             sql.close()
-        print(f"Database saved → {output_db}")
+        slick_log.info(f"Database saved → {output_db}")
     @staticmethod
     def get_page_html(url: str) -> str | None:
         try:
@@ -61,33 +64,34 @@ class SlickScraperBs4:
             resp.raise_for_status()
             return resp.text
         except Exception as e:
-            print(f"Error fetching {url}: {e}")
+            slick_log.error(f"Error fetching {url}: {e}")
             return None
 
     # -------- Main Runners --------
-    def scrape_by_categories(self, is_test=True, category="tech"):
+    def scrape_by_categories(self, is_test=True, category="tech", max_pages=5):
         base_url = f"https://slickdeals.net/deals/{category}/?page=1"
         deals_lis, deal_count = [], 0
         url = base_url
+        page_num = 1
 
-        while url and deal_count < 120:
-            print(f"Scraping: {url}")
+        while url and page_num <= max_pages:
+            slick_log.info(f"Scraping: {url}")
             html = self.get_page_html(url)
             if not html:
                 break
 
-            new_deals = extract_category_deals(self.to_float,html, BY_CATEGORIES, category)
+            new_deals = extract_category_deals(self.to_float, html, BY_CATEGORIES, category)
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)
 
-            print(f"→ Found {len(new_deals)} deals on this page")
+            slick_log.info(f"→ Found {len(new_deals)} deals on this page")
 
-            page_num = int(url.split("page=")[-1]) + 1
+            page_num += 1
             url = f"https://slickdeals.net/deals/{category}/?page={page_num}"
 
             time.sleep(2)
 
-        print(f"* Scraped {deal_count} listings")
+        slick_log.info(f"* Scraped {deal_count} listings")
         self.store_db(deals_lis, is_test=is_test)
         self.store_csv(deals_lis)
 
@@ -100,24 +104,24 @@ class SlickScraperBs4:
 
         while page_num <= max_pages:  # failsafe max_pages
             url = base_url + str(page_num)
-            print(f"Scraping page {page_num}: {url}")
+            slick_log.info(f"Scraping page {page_num}: {url}")
             html = self.get_page_html(url)
             if not html:
                 break
 
             new_deals = extract_search_deals(self.to_float, html, BY_SEARCH)
             if not new_deals:  # ^ Stop if no deals are found
-                print("No more deals found, stopping.")
+                slick_log.info("No more deals found, stopping.")
                 break
 
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)
-            print(f"→ Found {len(new_deals)} deals on page {page_num}")
+            slick_log.info(f"→ Found {len(new_deals)} deals on page {page_num}")
 
             page_num += 1
             time.sleep(2)
 
-        print(f"* Total scraped listings: {deal_count}")
+        slick_log.info(f"* Total scraped listings: {deal_count}")
         self.store_db(deals_lis, is_test=is_test)
         self.store_csv(deals_lis)
 

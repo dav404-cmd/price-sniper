@@ -1,4 +1,7 @@
 import sqlite3
+from utils.logger import get_logger
+
+db_log = get_logger("DataBase_Manager")
 
 class DataBase:
     def __init__(self,path,is_test):
@@ -33,7 +36,7 @@ class DataBase:
         self.conn.commit()
 
     def insert_dicts(self, cards):
-        print("Inserting", len(cards), "rows")
+        db_log.info(f"Inserting {len(cards)} rows")
         self.cursor.executemany("""
             INSERT INTO listings (title, price, claimed_orig_price, discount_percentage, store, category, time_stamp, url, scraped_at)
             VALUES (:title, :price, :claimed_orig_price, :discount_percentage, :store, :category, :time_stamp, :url, :scraped_at)

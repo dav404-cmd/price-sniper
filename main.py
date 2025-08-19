@@ -4,25 +4,55 @@ import sqlite3
 from scraper.scraper_runner_bs4 import run_by_categories, run_by_search
 
 st.set_page_config(layout="wide")
+
 # todo : add Test mode toggle
+
 test_mode = True
 db_path = "database/listing.db"
 db_path_test = "database/test.db"
 use_file = db_path_test if test_mode else db_path
 
 st.header("Price Sniper")
-product = st.text_input("Product name..", "iphone")
 
-# Run scraper button with a unique key
-if st.button("Start Scraper", key="start_scraper"):
-    run_by_search(is_test = True,query = product)  # todo : setup select box for run_by_test and run_by_category
-    st.success("Scraper has finished running!")
+tab1,tab2 = st.tabs(["Scrape Data","Explore Data"])
 
-if st.button("Show or Refresh Table", key="refresh_table"):
-    conn = sqlite3.connect(use_file)
-    df = pd.read_sql_query("SELECT * FROM listings", conn)
-    conn.close()
+st.divider()
 
-    tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage", "url"]]
-    st.subheader("Great deals (50%+ discount)")
-    st.dataframe(tables, use_container_width=True)
+with tab1:
+    mode = st.radio("**Choose scraping mode:**", ["Scrape by Category", "Scrape by Search"])
+    st.write("")
+    if mode == "Scrape by Category":
+        category = st.selectbox("Select category:", ["Tech", "Home", "Fashion"])
+        start = st.button("Start scraper",key="category_scraper")
+        if start and category:
+            st.write(f"Scraping deals in category: {category}")
+            with st.spinner("Scraper is running... please wait ⏳"):
+                run_by_categories(is_test=True,category=category,max_page=5)
+
+                st.success("Scraper has finished running!")
+
+    elif mode == "Scrape by Search":
+        query = st.text_input("Enter search keyword:")
+        start = st.button("Start scraper",key="search_scraper")
+        if start and query:
+            st.write(f"Searching for: {query}")
+            with st.spinner("Scraper is running... please wait ⏳"):
+                run_by_search(is_test=True, query=query,max_pages = 5)
+
+            st.success("Scraper has finished running!")
+
+with tab2:
+    if st.button("Show or Refresh Table", key="refresh_table"):
+        conn = sqlite3.connect(use_file)
+        df = pd.read_sql_query("SELECT * FROM listings", conn)
+        conn.close()
+
+        tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage", "url"]]
+        st.subheader("Great deals (50%+ discount)")
+        st.dataframe(tables, use_container_width=True)
+
+        st.divider()
+
+        st.subheader("Some other deals")
+        all_table = df[["title", "price", "claimed_orig_price", "discount_percentage", "url"]].head(30)
+        st.dataframe(all_table,use_container_width=True)
