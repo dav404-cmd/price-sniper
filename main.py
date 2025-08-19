@@ -18,11 +18,11 @@ if st.button("Start Scraper", key="start_scraper"):
     run_by_search(is_test = True,query = product)  # todo : setup select box for run_by_test and run_by_category
     st.success("Scraper has finished running!")
 
-conn = sqlite3.connect(use_file)
-df = pd.read_sql_query("SELECT * FROM listings", conn)
+if st.button("Show or Refresh Table", key="refresh_table"):
+    conn = sqlite3.connect(use_file)
+    df = pd.read_sql_query("SELECT * FROM listings", conn)
+    conn.close()
 
-tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage"]]
-
-st.subheader("Great deals.")
-st.dataframe(tables,use_container_width=True, height=500)
-conn.close()
+    tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage", "url"]]
+    st.subheader("Great deals (50%+ discount)")
+    st.dataframe(tables, use_container_width=True)

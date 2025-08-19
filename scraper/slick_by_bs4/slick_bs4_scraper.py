@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import time
 
-from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES, BY_SEARCH
+from scraper.slick_by_bs4.slick_xpaths import BY_CATEGORIES, BY_SEARCH
 from scraper.slick_by_bs4.by_category_bs4 import extract_category_deals
 from scraper.slick_by_bs4.by_search_bs4 import extract_search_deals
 

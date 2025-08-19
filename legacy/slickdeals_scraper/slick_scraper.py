@@ -4,9 +4,9 @@ from playwright.async_api import async_playwright
 from pathlib import Path
 import os
 
-from scraper.slickdeals_scraper.slick_xpaths import BY_CATEGORIES , BY_SEARCH
-from scraper.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
-from scraper.slickdeals_scraper.by_search import extract_search_deals
+from scraper.slick_by_bs4.slick_xpaths import BY_CATEGORIES , BY_SEARCH
+from legacy.slickdeals_scraper.by_categories import extract_category_deals , go_to_page , click_next_btn
+from legacy.slickdeals_scraper.by_search import extract_search_deals
 from manage_db.db_manager import DataBase
 
 class SlickScraper:

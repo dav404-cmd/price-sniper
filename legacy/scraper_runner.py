@@ -1,4 +1,4 @@
-from scraper.slickdeals_scraper.slick_scraper import SlickScraper
+from legacy.slickdeals_scraper.slick_scraper import SlickScraper
 
 async def run_by_categories():
     scraper = SlickScraper()
