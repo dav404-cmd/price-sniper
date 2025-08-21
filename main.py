@@ -1,3 +1,4 @@
+import pandas
 import pandas as pd
 import streamlit as st
 import sqlite3
@@ -11,6 +12,9 @@ test_mode = True
 db_path = "database/listing.db"
 db_path_test = "database/test.db"
 use_file = db_path_test if test_mode else db_path
+
+#CSV path that resets every run.(name is wrong.)
+csv_path = "data/raw/cate_based_deals.csv"
 
 st.header("Price Sniper")
 
@@ -31,15 +35,18 @@ with tab1:
 
                 st.success("Scraper has finished running!")
 
+            st.subheader("Scraped Data.")
+            df = pandas.read_csv(csv_path)
+            scraped_table = df[["title", "price", "claimed_orig_price", "discount_percentage", "url"]]
+
     elif mode == "Scrape by Search":
         query = st.text_input("Enter search keyword:")
         start = st.button("Start scraper",key="search_scraper")
         if start and query:
-            st.write(f"Searching for: {query}")
-            with st.spinner("Scraper is running... please wait ⏳"):
+            with st.spinner(f"Scraper is running... please wait ⏳.\nSearching for :**{query}**"):
                 run_by_search(is_test=True, query=query,max_pages = 5)
 
-            st.success("Scraper has finished running!")
+                st.success("Scraper has finished running!")
 
 with tab2:
     if st.button("Show or Refresh Table", key="refresh_table"):
