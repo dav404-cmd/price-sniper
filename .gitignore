@@ -12,4 +12,5 @@ __pycache__/
 
 /database/*
 
+!/data/data_cleaner/
 struct.py

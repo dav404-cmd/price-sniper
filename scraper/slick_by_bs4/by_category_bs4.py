@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+from data.data_cleaner.date_formating import normalize_scraped_date
 
 def extract_category_deals(to_float, html: str, xpath_structure: dict, category: str):
     soup = BeautifulSoup(html, "lxml")
@@ -30,6 +30,13 @@ def extract_category_deals(to_float, html: str, xpath_structure: dict, category:
         discount_percentage = (discount / cleaned_orig_price) * 100
         float_discount = float(f"{discount_percentage:.2f}")
 
+        #Time Stamp
+        time_stamp = (
+            deal.select_one(xpath_structure["TIME_STAMP"]).get_text(strip=True)
+            if deal.select_one(xpath_structure["TIME_STAMP"]) else None)
+        formated_time_stamp = normalize_scraped_date(time_stamp)
+
+
         extracted.append({
             "title": title,
             "price": cleaned_price,
@@ -38,11 +45,9 @@ def extract_category_deals(to_float, html: str, xpath_structure: dict, category:
             "store": (deal.select_one(xpath_structure["STORE"]).get_text(strip=True)
                       if deal.select_one(xpath_structure["STORE"]) else None),
             "category": category,
-            "time_stamp": (
-            deal.select_one(xpath_structure["TIME_STAMP"]).get_text(strip=True)
-            if deal.select_one(xpath_structure["TIME_STAMP"]) else None),
+            "time_stamp": formated_time_stamp,
             "url": "https://slickdeals.net" + relative_url if relative_url else None,
-            "scraped_at": datetime.now().isoformat()
+            "scraped_at": datetime.now()
         })
 
     return extracted
