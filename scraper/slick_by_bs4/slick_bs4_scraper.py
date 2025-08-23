@@ -8,6 +8,7 @@ from scraper.slick_by_bs4.slick_xpaths import BY_CATEGORIES, BY_SEARCH
 from scraper.slick_by_bs4.by_category_bs4 import extract_category_deals
 from scraper.slick_by_bs4.by_search_bs4 import extract_search_deals
 from utils.logger import get_logger
+from support_llm.category_filler import fill_category
 
 slick_log = get_logger("Slick_bs4_scraper")
 
@@ -96,6 +97,11 @@ class SlickScraperBs4:
         self.store_csv(deals_lis)
 
     def scrape_by_search(self, is_test=True, query="iphone", max_pages=50):
+
+        """FIll category using query"""
+        category = fill_category(query)
+        slick_log.info(f"Category filled with {category}")
+
         query_clean = query.replace(" ", "+")
         base_url = f"https://slickdeals.net/search?q={query_clean}&filters[display][]=hideExpired&page="
 
@@ -109,7 +115,7 @@ class SlickScraperBs4:
             if not html:
                 break
 
-            new_deals = extract_search_deals(self.to_float, html, BY_SEARCH)
+            new_deals = extract_search_deals(self.to_float, html, BY_SEARCH,category = category)
             if not new_deals:  # ^ Stop if no deals are found
                 slick_log.info("No more deals found, stopping.")
                 break

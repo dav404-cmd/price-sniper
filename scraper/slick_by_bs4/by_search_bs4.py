@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from data.data_cleaner.date_formating import normalize_scraped_date
 
-def extract_search_deals(to_float, html: str, xpath_structure: dict):
+def extract_search_deals(to_float, html: str, xpath_structure: dict, category):
     soup = BeautifulSoup(html, "lxml")
     deals = soup.select(xpath_structure["CARDS"])
     extracted = []
@@ -42,7 +42,7 @@ def extract_search_deals(to_float, html: str, xpath_structure: dict):
             "discount_percentage": float_discount,
             "store": (deal.select_one(xpath_structure["STORE"]).get_text(strip=True)
                       if deal.select_one(xpath_structure["STORE"]) else None),
-            "category": None,
+            "category": category,
             "time_stamp": formated_time_stamp,
             "url": "https://slickdeals.net" + relative_url if relative_url else None,
             "scraped_at": datetime.now()

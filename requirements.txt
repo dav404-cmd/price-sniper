@@ -5,6 +5,8 @@ requests
 beautifulsoup4
 lxml
 streamlit
+langchain
+langchain_ollama
 
 pyqt5
 qasync
