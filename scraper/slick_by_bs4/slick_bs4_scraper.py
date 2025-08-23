@@ -84,6 +84,8 @@ class SlickScraperBs4:
             new_deals = extract_category_deals(self.to_float, html, BY_CATEGORIES, category)
             deal_count += len(new_deals)
             deals_lis.extend(new_deals)
+            if len(new_deals) == 0:
+                break
 
             slick_log.info(f"→ Found {len(new_deals)} deals on this page")
 
