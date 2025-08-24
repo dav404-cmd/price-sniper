@@ -45,7 +45,7 @@ with tab1:
         if start and category:
             st.write(f"Scraping deals in category: {category}")
             with st.spinner("Scraper is running... please wait ⏳"):
-                run_by_categories(is_test=True, category=category, max_page=5)
+                run_by_categories(category=category, max_page=5)
                 st.success("Scraper has finished running!")
 
             # Load and cache scraped data
@@ -63,7 +63,7 @@ with tab1:
         start = st.button("Start scraper",key="search_scraper")
         if start and query:
             with st.spinner(f"Scraper is running... please wait ⏳.\nSearching for :**{query}**"):
-                run_by_search(is_test=True, query=query,max_pages = 5)
+                run_by_search(query=query,max_pages = 5)
 
                 st.success("Scraper has finished running!")
 

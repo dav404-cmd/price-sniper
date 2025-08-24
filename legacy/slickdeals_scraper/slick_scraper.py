@@ -65,7 +65,7 @@ class SlickScraper:
 
     def store_db(self,deals_lis,is_test):
         output_db = self.get_db_path(is_test=is_test)
-        sql = DataBase(output_db, is_test=is_test)
+        sql = DataBase(output_db, reset=is_test)
         if deals_lis:
             sql.insert_dicts(deals_lis)
             sql.close()
