@@ -36,7 +36,6 @@ with tab1:
             index=None,
             placeholder="Start typing...",
             key="autocomplete_input",
-            editable=True,
         )
         start = st.button("Start scraper",key="category_scraper")
         if start and category:
