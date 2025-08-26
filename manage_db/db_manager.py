@@ -24,6 +24,8 @@ class DataBase:
     def reset(self):
         self.cursor.execute("DROP TABLE IF EXISTS listings")
         self.conn.commit()
+        self.create_table()
+
     def create_table(self):
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS listings (
@@ -31,6 +33,7 @@ class DataBase:
             title TEXT,
             price REAL,
             claimed_orig_price REAL,
+            discount REAL,
             discount_percentage REAL,
             store TEXT,
             category TEXT,
@@ -40,13 +43,16 @@ class DataBase:
         )
         """)
         self.conn.commit()
+        self.cursor.execute("PRAGMA table_info(listings)")
+        columns = [col[1] for col in self.cursor.fetchall()]
+        db_log.info(f"Current columns in listings → {columns}")
 
     def insert_dicts(self, cards):
         db_log.info(f"Inserting {len(cards)} rows")
         self.cursor.executemany("""
             INSERT OR IGNORE INTO listings 
-            (title, price, claimed_orig_price, discount_percentage, store, category, time_stamp, url, scraped_at)
-            VALUES (:title, :price, :claimed_orig_price, :discount_percentage, :store, :category, :time_stamp, :url, :scraped_at)
+            (title, price, claimed_orig_price, discount, discount_percentage, store, category, time_stamp, url, scraped_at)
+            VALUES (:title, :price, :claimed_orig_price, :discount, :discount_percentage, :store, :category, :time_stamp, :url, :scraped_at)
         """, cards)
         self.conn.commit()
 

@@ -41,6 +41,7 @@ def extract_category_deals(to_float, html: str, xpath_structure: dict, category:
             "title": title,
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
+            "discount":discount,
             "discount_percentage": float_discount,
             "store": (deal.select_one(xpath_structure["STORE"]).get_text(strip=True)
                       if deal.select_one(xpath_structure["STORE"]) else None),

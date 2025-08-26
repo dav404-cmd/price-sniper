@@ -1,6 +1,6 @@
 from scraper.slick_by_bs4.slick_bs4_scraper import SlickScraperBs4
 
-def run_by_categories(category = "tech",max_page = 5):
+def run_by_categories(category = "tech",max_page = 50):
     scraper = SlickScraperBs4()
     scraper.scrape_by_categories(category=category,max_pages = max_page)
 

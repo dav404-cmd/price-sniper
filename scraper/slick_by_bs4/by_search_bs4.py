@@ -40,6 +40,7 @@ def extract_search_deals(to_float, html: str, xpath_structure: dict, category):
             "price": cleaned_price,
             "claimed_orig_price": cleaned_orig_price,
             "discount_percentage": float_discount,
+            "discount": discount,
             "store": (deal.select_one(xpath_structure["STORE"]).get_text(strip=True)
                       if deal.select_one(xpath_structure["STORE"]) else None),
             "category": category,
