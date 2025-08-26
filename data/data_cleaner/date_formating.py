@@ -46,12 +46,39 @@ def normalize_scraped_date(raw_date: str) -> str:
 
     raise ValueError(f"Unsupported date format: {raw_date}")
 
+def time_ago(ts):
+    now = datetime.now()
+    delta = now - ts
+
+    days = delta.days
+    seconds = delta.seconds
+
+    if days < 1:
+        if seconds < 60:
+            return f"{seconds}s ago"
+        elif seconds < 3600:
+            return f"{seconds // 60}m ago"
+        else:
+            return f"{seconds // 3600}h ago"
+    elif days < 7:
+        return f"{days}d ago"
+    elif days < 30:
+        return f"{days // 7}w ago"
+    elif days < 365:
+        return f"{days // 30}mo ago"
+    else:
+        return f"{days // 365}y ago"
+
+
+
 
 # --- tests ---
 if __name__ == "__main__":
-
+    print(2 * "-","normalize",2 * "-")
     print(normalize_scraped_date("20h ago"))
     print(normalize_scraped_date("2w ago"))
     print(normalize_scraped_date("Yesterday 01:12 PM"))
     print(normalize_scraped_date("Jun 16, 2025 08:09 AM"))
     print(normalize_scraped_date("2025-08-22 01:11:40.842025"))
+    print(2 * "-", "time_ago", 2 * "-")
+    print(time_ago(datetime(2025, 8, 21, 13, 12)))

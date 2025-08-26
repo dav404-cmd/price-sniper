@@ -9,7 +9,7 @@ class DataBase:
         self.cursor = self.conn.cursor()
         if reset:
             db_log.critical(f"Reset=True will reset the {path} db")
-            do_reset = input(f"DO YOU WISH TO PROCESSED ? \nTYPE (YES I WANT TO DELETE DATA BASE) \nANYTHING ELSE WILL BE CONSIDERED NO. \nEnter answer : ")
+            do_reset = input(f"DO YOU WISH TO PROCEED ? \nTYPE (YES I WANT TO DELETE DATA BASE) \nANYTHING ELSE WILL BE CONSIDERED NO. \nEnter answer : ")
             if do_reset == "YES I WANT TO DELETE DATA BASE":
                 db_log.critical(f"Reset {path} DataBase")
                 self.reset()

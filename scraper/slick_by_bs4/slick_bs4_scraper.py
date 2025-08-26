@@ -38,11 +38,11 @@ class SlickScraperBs4:
         output_csv = csv_folder / "cate_based_deals.csv"
         return output_csv
 
-    def get_db_path(self, reset) -> Path:
+    def get_db_path(self, is_test) -> Path:
         database_path = self.project_root / "database"
         db_path = database_path / "listing.db"
         test_db_path = database_path / "test.db"
-        return test_db_path if reset else db_path
+        return test_db_path if is_test else db_path
 
     def store_csv(self, deals_lis):
         output_file = self.get_csv_path()
@@ -51,9 +51,9 @@ class SlickScraperBs4:
         df.to_csv(output_file, index=False)
         slick_log.info(f"CSV saved → {output_file}")
 
-    def store_db(self, deals_lis, reset):
-        output_db = self.get_db_path(reset=reset)
-        sql = DataBase(output_db, reset=reset)
+    def store_db(self, deals_lis,is_test = False):
+        output_db = self.get_db_path(is_test=is_test)
+        sql = DataBase(output_db)
         if deals_lis:
             sql.insert_dicts(deals_lis)
             sql.close()
@@ -70,7 +70,7 @@ class SlickScraperBs4:
             return None
 
     # -------- Main Runners --------
-    def scrape_by_categories(self, reset=False, category="tech", max_pages=5):
+    def scrape_by_categories(self,category="tech", max_pages=5):
         base_url = f"https://slickdeals.net/deals/{category}/?page=1"
         deals_lis, deal_count = [], 0
         url = base_url
@@ -96,10 +96,10 @@ class SlickScraperBs4:
             time.sleep(2)
 
         slick_log.info(f"* Scraped {deal_count} listings")
-        self.store_db(deals_lis, reset=reset)
+        self.store_db(deals_lis)
         self.store_csv(deals_lis)
 
-    def scrape_by_search(self, reset=False, query="iphone", max_pages=50):
+    def scrape_by_search(self,query="iphone", max_pages=50):
 
         """FIll category using query"""
         category = fill_category(query)
@@ -131,18 +131,18 @@ class SlickScraperBs4:
             time.sleep(2)
 
         slick_log.info(f"* Total scraped listings: {deal_count}")
-        self.store_db(deals_lis, reset=reset)
+        self.store_db(deals_lis)
         self.store_csv(deals_lis)
 
 
 # -------- Entry Points --------
 def run_by_categories():
     scraper = SlickScraperBs4()
-    scraper.scrape_by_categories(reset=False, category="tech")
+    scraper.scrape_by_categories(category="tech")
 
 def run_by_search():
     scraper = SlickScraperBs4()
-    scraper.scrape_by_search(reset=False, query="iphone")
+    scraper.scrape_by_search(query="iphone")
 
 if __name__ == "__main__":
     run_by_categories()

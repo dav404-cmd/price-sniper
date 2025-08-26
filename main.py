@@ -3,18 +3,15 @@ import pandas as pd
 import streamlit as st
 import sqlite3
 from scraper.scraper_runner_bs4 import run_by_categories, run_by_search
+from data.data_cleaner.date_formating import time_ago
 import json
 import os
+from datetime import datetime,timedelta
 
 st.set_page_config(layout="wide")
 
-# todo : add Test mode toggle
 
-test_mode = True
 db_path = "database/listing.db"
-db_path_test = "database/test.db"
-use_file = db_path_test if test_mode else db_path
-
 #CSV path that resets every run.(name is wrong.)
 csv_path = "data/raw/cate_based_deals.csv"
 
@@ -25,7 +22,7 @@ with open(category_data,"r") as f:
 
 st.header("Price Sniper")
 
-tab1,tab2 = st.tabs(["Scrape Data","Explore Data"])
+tab1,tab2,tab3 = st.tabs(["Scrape Data","Explore Data","AI Suggestion"])
 
 st.divider()
 
@@ -39,7 +36,7 @@ with tab1:
             index=None,
             placeholder="Start typing...",
             key="autocomplete_input",
-            # editable=True is now default in recent Streamlit versions
+            editable=True,
         )
         start = st.button("Start scraper",key="category_scraper")
         if start and category:
@@ -79,7 +76,7 @@ with tab1:
 
 with tab2:
     if st.button("Show or Refresh Table", key="refresh_table"):
-        conn = sqlite3.connect(use_file)
+        conn = sqlite3.connect(db_path)
         df = pd.read_sql_query("SELECT * FROM listings", conn)
         conn.close()
 
@@ -92,3 +89,47 @@ with tab2:
         st.subheader("Some other deals")
         all_table = df[["title", "price", "claimed_orig_price", "discount_percentage", "url"]].head(30)
         st.dataframe(all_table,use_container_width=True)
+
+
+with tab3:
+    conn = sqlite3.connect(db_path)
+    df = pd.read_sql_query("SELECT * FROM listings", conn)
+    conn.close()
+
+    df["time_stamp"] = pd.to_datetime(df["time_stamp"])
+
+    # Filter for >50% discount
+    table1 = df[df["discount_percentage"] > 80][[
+        "title", "price", "claimed_orig_price", "discount_percentage", "url", "time_stamp"
+    ]]
+
+    now = datetime.now()
+    oldest_time = now - timedelta(days=30)
+
+    # Keep rows between oldest_time and now
+    table2 = table1[
+        (table1["time_stamp"] >= oldest_time) &
+        (table1["time_stamp"] <= now)
+        ].copy()
+
+    # Add post_date column using time_ago()
+    table2["post_date"] = table2["time_stamp"].apply(time_ago)
+
+    st.divider()
+
+    st.subheader("Recent great deals")
+    #todo: switch the json formated data in to json like : title = title_ /n price = price_ format
+    table2_json = [
+        {
+            "title": row["title"],
+            "price": row["price"],
+            "claimed original price" : row["claimed_orig_price"],
+            "discount %" : row["discount_percentage"],
+            "time stamp" : row["post_date"],
+            "url" : row["url"]
+        }
+        for _, row in table2.iterrows()
+    ]
+
+    for item in table2_json:
+        st.json(item)
