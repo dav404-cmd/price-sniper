@@ -22,7 +22,7 @@ with open(category_data,"r") as f:
 
 st.header("Price Sniper")
 
-tab1,tab2,tab3 = st.tabs(["Scrape Data","Explore Data","AI Suggestion"])
+tab1,tab2,tab3 = st.tabs(["Scrape Data","Explore Data","Recent deals."])
 
 st.divider()
 
@@ -41,7 +41,7 @@ with tab1:
         if start and category:
             st.write(f"Scraping deals in category: {category}")
             with st.spinner("Scraper is running... please wait ⏳"):
-                run_by_categories(category=category, max_page=5)
+                run_by_categories(category=category, max_page=50)
                 st.success("Scraper has finished running!")
 
             # Load and cache scraped data
@@ -59,7 +59,7 @@ with tab1:
         start = st.button("Start scraper",key="search_scraper")
         if start and query:
             with st.spinner(f"Scraper is running... please wait ⏳.\nSearching for :**{query}**"):
-                run_by_search(query=query,max_pages = 5)
+                run_by_search(query=query,max_pages = 50)
 
                 st.success("Scraper has finished running!")
 
@@ -116,7 +116,7 @@ with tab3:
 
     st.divider()
 
-    st.subheader("Recent great deals")
+    st.subheader("Recent great deals . (80%+ discount.Only a month old)")
     #todo: switch the json formated data in to json like : title = title_ /n price = price_ format
     table2_json = [
         {

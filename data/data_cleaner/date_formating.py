@@ -30,6 +30,14 @@ def normalize_scraped_date(raw_date: str) -> str:
         dt = yesterday.replace(hour=dt.hour, minute=dt.minute)
         return dt.strftime("%Y-%m-%d %H:%M")
 
+    # Case 2.5: "Today 01:30 AM"
+    if raw_date.lower().startswith("today"):
+        time_part = raw_date.split(" ", 1)[1]  # take "01:30 AM"
+        dt = datetime.strptime(time_part, "%I:%M %p")
+        today = datetime.now()
+        dt = today.replace(hour=dt.hour, minute=dt.minute)
+        return dt.strftime("%Y-%m-%d %H:%M")
+
     # Case 3: Full date like "Jun 16, 2025 08:09 AM"
     try:
         dt = datetime.strptime(raw_date, "%b %d, %Y %I:%M %p")

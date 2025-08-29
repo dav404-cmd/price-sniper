@@ -44,8 +44,8 @@ class DataBase:
         """)
         self.conn.commit()
         self.cursor.execute("PRAGMA table_info(listings)")
-        columns = [col[1] for col in self.cursor.fetchall()]
-        db_log.info(f"Current columns in listings → {columns}")
+        #columns = [col[1] for col in self.cursor.fetchall()]
+        #db_log.info(f"Current columns in listings → {columns}")
 
     def insert_dicts(self, cards):
         db_log.info(f"Inserting {len(cards)} rows")
@@ -71,6 +71,40 @@ class DataBase:
         self.cursor.execute("SELECT COUNT(*) FROM listings")
         total_rows = self.cursor.fetchone()[0]
         db_log.info(f"Total rows in DB → {total_rows}")
+
+    #searchers
+    def find_by_url(self, url: str):
+        self.cursor.execute("SELECT * FROM listings WHERE url = ?", (url,))
+        row = self.cursor.fetchone()
+        if row:
+            col_names = [desc[0] for desc in self.cursor.description]
+            return dict(zip(col_names, row))
+        return None
+
+    def search_by_title(self, keyword: str, limit: int = 10):
+        self.cursor.execute("""
+            SELECT * FROM listings
+            WHERE title LIKE ?
+            ORDER BY discount_percentage DESC
+            LIMIT ?
+        """, (f"%{keyword}%", limit))
+        rows = self.cursor.fetchall()
+        col_names = [desc[0] for desc in self.cursor.description]
+        return [dict(zip(col_names, row)) for row in rows]
+
+    def search_by_category(self, category: str, limit: int = 10):
+        self.cursor.execute("""
+            SELECT * FROM listings
+            WHERE category = ?
+            ORDER BY time_stamp DESC
+            LIMIT ?
+        """, (category, limit))
+        rows = self.cursor.fetchall()
+        col_names = [desc[0] for desc in self.cursor.description]
+        return [dict(zip(col_names, row)) for row in rows]
+
+
+
 
 
 
