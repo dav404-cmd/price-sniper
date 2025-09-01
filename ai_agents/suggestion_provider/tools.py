@@ -8,7 +8,9 @@ HEADERS = {
     )
 }
 class DeepScraper:
-    def get_html(self,url):
+    """scrape a slickdeals deal page to get details and comments llm can use."""
+    @staticmethod
+    def get_html(url):
         try:
             resp = requests.get(url, headers=HEADERS, timeout=30)
             resp.raise_for_status()
@@ -16,8 +18,8 @@ class DeepScraper:
         except Exception as e:
             print(f"Error fetching {url}: {e}")
             return None
-
-    def get_deal_details(self,html):
+    @staticmethod
+    def get_deal_details(html):
         soup = BeautifulSoup(html, "lxml")
         blocks = soup.select("div.dealDetailsRawHtml.dealDetailsTab__bodyHtml")
 
@@ -36,8 +38,8 @@ class DeepScraper:
 
         return cleaned
 
-
-    def get_comments(self,html):
+    @staticmethod
+    def get_comments(html):
         soup = BeautifulSoup(html, "lxml")
 
         # Find all comment blocks
@@ -55,43 +57,42 @@ class DeepScraper:
 
 # tools/database_tools.py
 """TOOL 2"""
-from manage_db.db_manager import DataBase
-from pathlib import Path
-root = Path(__file__).parents[2].resolve()
-db_path = root / "database" / "listing.db"
-print(f"path {db_path}")
+from manage_db.db_manager import PostgresDB  # your PostgresDB class
 
 class QuerySearcher:
     def __init__(self):
-        self.db = DataBase(db_path)
+        self.db = PostgresDB()
         self.cursor = self.db.cursor
 
-    def search_by_url(self,urls: str):
+    def search_by_url(self, urls: str):
         """Search the listings table for a specific URL."""
-        rows = self.db.cursor.execute(
-            "SELECT * FROM listings WHERE url = ?", (urls,)
-        ).fetchall()
-        return [dict(zip([c[0] for c in self.db.cursor.description], row)) for row in rows]
+        self.cursor.execute(
+            "SELECT * FROM listings WHERE url = %s", (urls,)
+        )
+        rows = self.cursor.fetchall()
+        return [dict(row) for row in rows]
 
-    def search_by_title(self,keyword: str, limit: int = 10):
+    def search_by_title(self, keyword: str, limit: int = 10):
         """Search listings by keyword in title."""
         self.cursor.execute("""
-                    SELECT * FROM listings
-                    WHERE title LIKE ?
-                    ORDER BY discount_percentage DESC
-                    LIMIT ?
-                """, (f"%{keyword}%", limit))
+            SELECT * FROM listings
+            WHERE title ILIKE %s
+            ORDER BY discount_percentage DESC
+            LIMIT %s
+        """, (f"%{keyword}%", limit))
         rows = self.cursor.fetchall()
-        col_names = [desc[0] for desc in self.cursor.description]
-        return [dict(zip(col_names, row)) for row in rows]
+        return [dict(row) for row in rows]
 
-    def search_under_price(self,keyword:str,max_price: float, limit: int = 10):
+    def search_under_price(self, keyword: str, max_price: float, limit: int = 10):
         """Search for deals under a given price."""
-        rows = self.db.cursor.execute(
-            "SELECT * FROM listings WHERE LOWER(title) LIKE LOWER(?) AND price <= ? ORDER BY price ASC LIMIT ?",
-            (f"%{keyword}%",max_price, limit)
-        ).fetchall()
-        return [dict(zip([c[0] for c in self.db.cursor.description], row)) for row in rows]
+        self.cursor.execute("""
+            SELECT * FROM listings
+            WHERE title ILIKE %s AND price <= %s
+            ORDER BY price ASC
+            LIMIT %s
+        """, (f"%{keyword}%", max_price, limit))
+        rows = self.cursor.fetchall()
+        return [dict(row) for row in rows]
 
 
 
@@ -108,8 +109,8 @@ if __name__ == "__main__":
     for d in details:
         print(d)
 
-    print("==== search by url ====")
+    print("==== search by title ====")
 
     tool2 = QuerySearcher()
-    results = tool2.search_under_price("computer",500,5)
+    results = tool2.search_by_title("computer")
     print("Results:", results)

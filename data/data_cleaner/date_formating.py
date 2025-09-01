@@ -54,6 +54,11 @@ def normalize_scraped_date(raw_date: str) -> str:
 
     raise ValueError(f"Unsupported date format: {raw_date}")
 
+def json_serializable(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
+
 def time_ago(ts):
     now = datetime.now()
     delta = now - ts

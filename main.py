@@ -1,17 +1,16 @@
 import pandas
 import pandas as pd
 import streamlit as st
-import sqlite3
 from scraper.scraper_runner_bs4 import run_by_categories, run_by_search
-from data.data_cleaner.date_formating import time_ago
+from ai_agents.suggestion_provider.suggester import SalesAssistantAgent,DummyLLM
 import json
 import os
-from datetime import datetime,timedelta
+
+from manage_db.db_manager import PostgresDB
 
 st.set_page_config(layout="wide")
 
 
-db_path = "database/listing.db"
 #CSV path that resets every run.(name is wrong.)
 csv_path = "data/raw/cate_based_deals.csv"
 
@@ -22,7 +21,7 @@ with open(category_data,"r") as f:
 
 st.header("Price Sniper")
 
-tab1,tab2,tab3 = st.tabs(["Scrape Data","Explore Data","Recent deals."])
+tab1,tab2,tab4 = st.tabs(["Scrape Data","Explore Data","Sales assistant."])
 
 st.divider()
 
@@ -75,60 +74,52 @@ with tab1:
 
 with tab2:
     if st.button("Show or Refresh Table", key="refresh_table"):
-        conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query("SELECT * FROM listings", conn)
-        conn.close()
+        db = PostgresDB()
 
-        tables = df[df["discount_percentage"] > 50][["title", "price", "claimed_orig_price", "discount_percentage", "url"]]
+        df = pd.read_sql("SELECT * FROM listings", db.conn)
+        db.close()
+
+        tables = df[df["discount_percentage"] > 50]
         st.subheader("Great deals (50%+ discount)")
         st.dataframe(tables, use_container_width=True)
 
         st.divider()
 
         st.subheader("Some other deals")
-        all_table = df[["title", "price", "claimed_orig_price", "discount_percentage", "url"]].head(30)
-        st.dataframe(all_table,use_container_width=True)
+        all_table = df.head(100)
+        st.dataframe(all_table, use_container_width=True)
 
 
-with tab3:
-    conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query("SELECT * FROM listings", conn)
-    conn.close()
 
-    df["time_stamp"] = pd.to_datetime(df["time_stamp"])
 
-    # Filter for >50% discount
-    table1 = df[df["discount_percentage"] > 80][[
-        "title", "price", "claimed_orig_price", "discount_percentage", "url", "time_stamp"
-    ]]
+llm = DummyLLM()
+agent = SalesAssistantAgent(llm)
 
-    now = datetime.now()
-    oldest_time = now - timedelta(days=30)
+with tab4:
+    st.header("🛍️ AI Sales Assistant")
 
-    # Keep rows between oldest_time and now
-    table2 = table1[
-        (table1["time_stamp"] >= oldest_time) &
-        (table1["time_stamp"] <= now)
-        ].copy()
+    # Initialize chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-    # Add post_date column using time_ago()
-    table2["post_date"] = table2["time_stamp"].apply(time_ago)
+    # Display previous messages
+    for msg in st.session_state.chat_history:
+        st.chat_message(msg["role"]).markdown(msg["content"])
 
-    st.divider()
+    # Chat input
+    user_input = st.chat_input("Ask me about deals, products, or prices...")
 
-    st.subheader("Recent great deals . (80%+ discount.Only a month old)")
-    #todo: switch the json formated data in to json like : title = title_ /n price = price_ format
-    table2_json = [
-        {
-            "title": row["title"],
-            "price": row["price"],
-            "claimed original price" : row["claimed_orig_price"],
-            "discount %" : row["discount_percentage"],
-            "time stamp" : row["post_date"],
-            "url" : row["url"]
-        }
-        for _, row in table2.iterrows()
-    ]
+    if user_input:
+        # Show user message
+        st.chat_message("user").markdown(user_input)
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-    for item in table2_json:
-        st.json(item)
+        # Get assistant response
+        response = agent.run(user_input)
+
+        # Show assistant message
+        st.chat_message("assistant").markdown(response)
+        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+
+

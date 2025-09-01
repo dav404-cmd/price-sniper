@@ -10,7 +10,7 @@ __pycache__/
 
 /data/*
 
-/database/*
+/legacy/database/*
 
 !/data/data_cleaner/
 !/data/helper_data/

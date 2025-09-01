@@ -12,7 +12,7 @@ from support_llm.category_filler import fill_category
 
 slick_log = get_logger("Slick_bs4_scraper")
 
-from manage_db.db_manager import DataBase
+from manage_db.db_manager import PostgresDB
 
 HEADERS = {
     "User-Agent": (
@@ -38,11 +38,6 @@ class SlickScraperBs4:
         output_csv = csv_folder / "cate_based_deals.csv"
         return output_csv
 
-    def get_db_path(self, is_test) -> Path:
-        database_path = self.project_root / "database"
-        db_path = database_path / "listing.db"
-        test_db_path = database_path / "test.db"
-        return test_db_path if is_test else db_path
 
     def store_csv(self, deals_lis):
         output_file = self.get_csv_path()
@@ -50,14 +45,16 @@ class SlickScraperBs4:
         df = pd.DataFrame(deals_lis)
         df.to_csv(output_file, index=False)
         slick_log.info(f"CSV saved → {output_file}")
-
-    def store_db(self, deals_lis,is_test = False):
-        output_db = self.get_db_path(is_test=is_test)
-        sql = DataBase(output_db)
-        if deals_lis:
-            sql.insert_dicts(deals_lis)
-            sql.close()
-        slick_log.info(f"Database saved → {output_db}")
+    @staticmethod
+    def store_db_postgres(deals_dic):
+        db = PostgresDB()
+        try:
+            db.insert_dicts(deals_dic)
+            slick_log.info(f"Database saved. Inserted {len(deals_dic)} rows.")
+        except Exception as e:
+            slick_log.error(f"Failed to save to DB: {e}")
+        finally:
+            db.close()
 
     @staticmethod
     def get_page_html(url: str) -> str | None:
@@ -96,7 +93,7 @@ class SlickScraperBs4:
             time.sleep(2)
 
         slick_log.info(f"* Scraped {deal_count} listings")
-        self.store_db(deals_lis)
+        self.store_db_postgres(deals_lis)
         self.store_csv(deals_lis)
 
     def scrape_by_search(self,query="iphone", max_pages=50):
@@ -131,7 +128,7 @@ class SlickScraperBs4:
             time.sleep(2)
 
         slick_log.info(f"* Total scraped listings: {deal_count}")
-        self.store_db(deals_lis)
+        self.store_db_postgres(deals_lis)
         self.store_csv(deals_lis)
 
 

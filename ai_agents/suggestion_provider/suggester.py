@@ -1,7 +1,7 @@
 import json
 import re
 from ai_agents.suggestion_provider.tools import DeepScraper, QuerySearcher
-
+from data.data_cleaner.date_formating import json_serializable
 # Initialize tools
 scraper = DeepScraper()
 query_db = QuerySearcher()
@@ -45,6 +45,18 @@ Rules:
 - You may return an array of tool calls if multiple tools are needed.
 """
 
+def classify_intent(user_input: str) -> str:
+    lowered = user_input.lower()
+    if any(greet in lowered for greet in ["hello", "hi", "hey", "yo", "good morning", "good evening"]):
+        return "greeting"
+    if any(thank in lowered for thank in ["thank you", "thanks", "appreciate"]):
+        return "gratitude"
+    if any(bye in lowered for bye in ["bye", "goodbye", "see you"]):
+        return "farewell"
+    if len(lowered.split()) <= 3:
+        return "short"
+    return "unknown"
+
 def parse_llm_response(response: str):
     if not response.strip():
         return []
@@ -56,7 +68,7 @@ def parse_llm_response(response: str):
         pass
 
     # Fallback: extract multiple JSON objects
-    objects = re.findall(r'\{.*?\}', response, re.DOTALL)
+    objects = re.findall(r'\{.*?\\}', response, re.DOTALL)
     result = []
     for obj in objects:
         try:
@@ -72,6 +84,7 @@ class SalesAssistantAgent:
 
     def run(self, user_input: str):
         prompt = f"{TOOLS_SCHEMA}\n\nUser request: {user_input}"
+        normal_prompt = f"You are an friendly sales assistant.Tasked to help users gain high value of there money."
         response = self.llm.ask(prompt)
         tool_calls = parse_llm_response(response)
 
@@ -86,7 +99,17 @@ class SalesAssistantAgent:
             tool_calls = parse_llm_response(response)
 
         if not tool_calls:
-            return "Sorry, I couldn't parse any valid tool calls from the LLM response."
+            intent = classify_intent(user_input)
+            if intent == "greeting":
+                return "Hey there! 👋 I'm your deal-finding assistant. Just let me know what you're shopping for today."
+            elif intent == "gratitude":
+                return "You're welcome! Let me know if you'd like help finding a great deal."
+            elif intent == "farewell":
+                return "Take care! Hope you score something awesome next time."
+            elif intent == "short":
+                return "Could you tell me a bit more about what you're looking for? I can help you find deals, compare prices, or explore product info."
+            else:
+                return self.llm.ask(normal_prompt)
 
         results_summary = []
         for call in tool_calls:
@@ -104,7 +127,9 @@ class SalesAssistantAgent:
         annotated_results = []
         for result in results_summary:
             for tool_name, output in result.items():
-                annotated_results.append(f"Tool used: {tool_name}\nResult:\n{json.dumps(output, indent=2)}")
+                annotated_results.append(
+                    f"Tool used: {tool_name}\nResult:\n{json.dumps(output, indent=2, default=json_serializable)}"
+                )
 
         followup_prompt = (
                 "You are a helpful sales assistant.\n"

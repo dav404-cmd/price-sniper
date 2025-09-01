@@ -1,24 +1,40 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import execute_values, RealDictCursor
 from utils.logger import get_logger
+import os
+from dotenv import load_dotenv
+db_log = get_logger("Postgres_Manager")
 
-db_log = get_logger("DataBase_Manager")
+load_dotenv()
 
-class DataBase:
-    def __init__(self,path,reset = False):
-        self.conn = sqlite3.connect(path)
-        self.cursor = self.conn.cursor()
+class PostgresDB:
+    def __init__(self, dbname="dealsdb",reset=False):
+        self.conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT")
+        )
+        self.cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+
         if reset:
-            db_log.critical(f"Reset=True will reset the {path} db")
-            do_reset = input(f"DO YOU WISH TO PROCEED ? \nTYPE (YES I WANT TO DELETE DATA BASE) \nANYTHING ELSE WILL BE CONSIDERED NO. \nEnter answer : ")
+            db_log.critical(f"Reset=True will reset the {dbname} database")
+            do_reset = input(
+                "DO YOU WISH TO PROCEED ?\n"
+                "TYPE (YES I WANT TO DELETE DATA BASE)\n"
+                "ANYTHING ELSE WILL BE CONSIDERED NO.\nEnter answer : "
+            )
             if do_reset == "YES I WANT TO DELETE DATA BASE":
-                db_log.critical(f"Reset {path} DataBase")
+                db_log.critical(f"Reset {dbname} database")
                 self.reset()
             else:
-                db_log.critical(f"DataBase {path} was NOT deleted")
+                db_log.critical(f"Database {dbname} was NOT deleted")
 
         self.create_table()
 
     def close(self):
+        self.cursor.close()
         self.conn.close()
 
     def reset(self):
@@ -29,37 +45,54 @@ class DataBase:
     def create_table(self):
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS listings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             title TEXT,
-            price REAL,
-            claimed_orig_price REAL,
-            discount REAL,
-            discount_percentage REAL,
+            price DOUBLE PRECISION,
+            claimed_orig_price DOUBLE PRECISION,
+            discount DOUBLE PRECISION,
+            discount_percentage DOUBLE PRECISION,
             store TEXT,
             category TEXT,
-            time_stamp TEXT,
-            url TEXT UNIQUE, --enforce uniqueness and remove dupes
+            time_stamp TIMESTAMP,
+            url TEXT UNIQUE, -- enforce uniqueness
             scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
         self.conn.commit()
-        self.cursor.execute("PRAGMA table_info(listings)")
-        #columns = [col[1] for col in self.cursor.fetchall()]
-        #db_log.info(f"Current columns in listings → {columns}")
+        db_log.info("Ensure Table Exists.")
 
     def insert_dicts(self, cards):
         db_log.info(f"Inserting {len(cards)} rows")
-        self.cursor.executemany("""
-            INSERT OR IGNORE INTO listings 
+        query = """
+            INSERT INTO listings
             (title, price, claimed_orig_price, discount, discount_percentage, store, category, time_stamp, url, scraped_at)
-            VALUES (:title, :price, :claimed_orig_price, :discount, :discount_percentage, :store, :category, :time_stamp, :url, :scraped_at)
-        """, cards)
+            VALUES %s
+            ON CONFLICT (url) DO NOTHING
+        """
+        values = [
+            (
+                card.get("title"),
+                card.get("price"),
+                card.get("claimed_orig_price"),
+                card.get("discount"),
+                card.get("discount_percentage"),
+                card.get("store"),
+                card.get("category"),
+                card.get("time_stamp"),
+                card.get("url"),
+                card.get("scraped_at"),
+            )
+            for card in cards
+        ]
+        execute_values(self.cursor, query, values)
         self.conn.commit()
 
     def delete_first(self):
         self.cursor.execute("""
         DELETE FROM listings
-        WHERE ROWID = (SELECT ROWID FROM listings ORDER BY ROWID ASC LIMIT 1)
+        WHERE id = (
+            SELECT id FROM listings ORDER BY id ASC LIMIT 1
+        )
         """)
         self.conn.commit()
 
@@ -69,42 +102,55 @@ class DataBase:
 
     def count_row(self):
         self.cursor.execute("SELECT COUNT(*) FROM listings")
-        total_rows = self.cursor.fetchone()[0]
+        total_rows = self.cursor.fetchone()["count"]
         db_log.info(f"Total rows in DB → {total_rows}")
 
-    #searchers
+    # Searchers
+
+    def show_all(self, readable=False):
+        self.cursor.execute("SELECT * FROM listings")
+        rows = self.cursor.fetchall()
+
+        # Convert RealDictCursor rows to normal dicts
+        rows = [dict(row) for row in rows]
+
+        if readable:
+            for row in rows:
+                # Format scraped_at to a readable "time ago" if you want
+                scraped_at = row.get("scraped_at")
+                print(
+                    f"{row['id']:3} | {row['title'][:40]:40} | ${row['price']:8.2f} | {row['discount_percentage']:5.1f}% | {row['scraped_at']} | {row['time_stamp']} | {row['url']}")
+
+        return rows
+
     def find_by_url(self, url: str):
-        self.cursor.execute("SELECT * FROM listings WHERE url = ?", (url,))
+        self.cursor.execute("SELECT * FROM listings WHERE url = %s", (url,))
         row = self.cursor.fetchone()
-        if row:
-            col_names = [desc[0] for desc in self.cursor.description]
-            return dict(zip(col_names, row))
-        return None
+        return dict(row) if row else None
 
     def search_by_title(self, keyword: str, limit: int = 10):
         self.cursor.execute("""
             SELECT * FROM listings
-            WHERE title LIKE ?
+            WHERE title ILIKE %s
             ORDER BY discount_percentage DESC
-            LIMIT ?
+            LIMIT %s
         """, (f"%{keyword}%", limit))
         rows = self.cursor.fetchall()
-        col_names = [desc[0] for desc in self.cursor.description]
-        return [dict(zip(col_names, row)) for row in rows]
+        return [dict(r) for r in rows]
 
     def search_by_category(self, category: str, limit: int = 10):
         self.cursor.execute("""
             SELECT * FROM listings
-            WHERE category = ?
+            WHERE category = %s
             ORDER BY time_stamp DESC
-            LIMIT ?
+            LIMIT %s
         """, (category, limit))
         rows = self.cursor.fetchall()
-        col_names = [desc[0] for desc in self.cursor.description]
-        return [dict(zip(col_names, row)) for row in rows]
+        return [dict(r) for r in rows]
 
+if __name__ == "__main__":
+    db = PostgresDB()
 
+    all1 = db.show_all(readable=True)
 
-
-
-
+    db.close()

@@ -7,7 +7,5 @@ lxml
 streamlit
 langchain
 langchain_ollama
-pydantic
-
-pyqt5
-qasync
+psycopg2
+python-dotenv
