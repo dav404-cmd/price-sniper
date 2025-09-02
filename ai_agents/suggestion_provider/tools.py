@@ -109,8 +109,15 @@ if __name__ == "__main__":
     for d in details:
         print(d)
 
-    print("==== search by title ====")
+    print("==== search by title,url,underprice ====")
 
     tool2 = QuerySearcher()
-    results = tool2.search_by_title("computer")
-    print("Results:", results)
+    results = tool2.search_by_title("computer",limit=2)
+    results2 = tool2.search_by_url(url)
+    results3 = tool2.search_under_price("computer",500,limit=2)
+
+
+
+    print("Results_title:", results)
+    print("Results_url:", results2)
+    print("Results_under_price:", results3)

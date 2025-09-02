@@ -116,8 +116,6 @@ class PostgresDB:
 
         if readable:
             for row in rows:
-                # Format scraped_at to a readable "time ago" if you want
-                scraped_at = row.get("scraped_at")
                 print(
                     f"{row['id']:3} | {row['title'][:40]:40} | ${row['price']:8.2f} | {row['discount_percentage']:5.1f}% | {row['scraped_at']} | {row['time_stamp']} | {row['url']}")
 
