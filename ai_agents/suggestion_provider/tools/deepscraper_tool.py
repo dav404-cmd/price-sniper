@@ -55,44 +55,6 @@ class DeepScraper:
             })
         return results
 
-# tools/database_tools.py
-"""TOOL 2"""
-from manage_db.db_manager import PostgresDB  # your PostgresDB class
-
-class QuerySearcher:
-    def __init__(self):
-        self.db = PostgresDB()
-        self.cursor = self.db.cursor
-
-    def search_by_url(self, urls: str):
-        """Search the listings table for a specific URL."""
-        self.cursor.execute(
-            "SELECT * FROM listings WHERE url = %s", (urls,)
-        )
-        rows = self.cursor.fetchall()
-        return [dict(row) for row in rows]
-
-    def search_by_title(self, keyword: str, limit: int = 10):
-        """Search listings by keyword in title."""
-        self.cursor.execute("""
-            SELECT * FROM listings
-            WHERE title ILIKE %s
-            ORDER BY discount_percentage DESC
-            LIMIT %s
-        """, (f"%{keyword}%", limit))
-        rows = self.cursor.fetchall()
-        return [dict(row) for row in rows]
-
-    def search_under_price(self, keyword: str, max_price: float, limit: int = 10):
-        """Search for deals under a given price."""
-        self.cursor.execute("""
-            SELECT * FROM listings
-            WHERE title ILIKE %s AND price <= %s
-            ORDER BY price ASC
-            LIMIT %s
-        """, (f"%{keyword}%", max_price, limit))
-        rows = self.cursor.fetchall()
-        return [dict(row) for row in rows]
 
 
 
@@ -109,15 +71,6 @@ if __name__ == "__main__":
     for d in details:
         print(d)
 
-    print("==== search by title,url,underprice ====")
-
-    tool2 = QuerySearcher()
-    results = tool2.search_by_title("computer",limit=2)
-    results2 = tool2.search_by_url(url)
-    results3 = tool2.search_under_price("computer",500,limit=2)
 
 
 
-    print("Results_title:", results)
-    print("Results_url:", results2)
-    print("Results_under_price:", results3)

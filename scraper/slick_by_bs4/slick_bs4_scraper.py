@@ -139,7 +139,7 @@ def run_by_categories():
 
 def run_by_search():
     scraper = SlickScraperBs4()
-    scraper.scrape_by_search(query="iphone")
+    scraper.scrape_by_search(query="computer",max_pages=50)
 
 if __name__ == "__main__":
-    run_by_categories()
+    run_by_search()
