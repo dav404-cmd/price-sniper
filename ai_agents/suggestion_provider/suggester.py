@@ -16,6 +16,7 @@ TOOLS = {
     "search_under_price": lambda args: query_db.search_under_price(
     args.get("keyword"), args["max_price"], args.get("limit", 5)
 ),
+    "search_closest_price": lambda args: query_db.search_closest_price(args["keyword"],args["price"],args.get("limit",5)),
 }
 
 #---- Agent ----
@@ -105,7 +106,8 @@ if __name__ == "__main__":
     queries = [
         "Show me computer deals under $500 and its information. Give me all the details you can.",
         "Get me details and comments for https://slickdeals.net/f/18164845-metro-by-t-mobile-iphone-13-128gb-125",
-        "Get me some iphone deals provide the deals urls."
+        "Get me some iphone deals provide the deals urls.",
+        "show me iphone of $700"
     ]
 
     for query in queries:

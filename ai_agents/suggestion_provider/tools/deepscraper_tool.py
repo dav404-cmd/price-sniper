@@ -40,6 +40,7 @@ class DeepScraper:
 
     @staticmethod
     def get_comments(html):
+        #currently only scraped first page of comments.
         soup = BeautifulSoup(html, "lxml")
 
         # Find all comment blocks

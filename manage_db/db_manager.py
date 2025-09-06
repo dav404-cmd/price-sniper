@@ -55,7 +55,7 @@ class PostgresDB:
             category TEXT,
             time_stamp TIMESTAMP,
             url TEXT UNIQUE, -- enforce uniqueness
-            scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            scraped_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         )
         """)
         self.conn.commit()

@@ -78,7 +78,10 @@ You can use these tools:
 5. search_under_price → {{ "tool": "search_under_price", "args": {{ "keyword": "<text>", "max_price": <float>, "limit": <int> }} }}
    - Use this to find deals under a specific price, optionally filtered by keyword (e.g., "computer" under $500).
    - {QuerySearcher_return}
-
+   
+6. search_closest_price -> {{ "tool": "search_closest_price", "args": {{ "keyword": "<text>", "price": <float>, "limit": <int> }} }}
+   - Use this to find deals of or near a specific price, optionally filtered by keyword (e.g., "computer" of $500).
+   - {QuerySearcher_return}
 Rules:
 - Only use the tools listed above. Do not invent results or reference other sources.
 - Always respond in JSON when user data is required.
