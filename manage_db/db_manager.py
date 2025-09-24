@@ -30,8 +30,7 @@ class PostgresDB:
                 self.reset()
             else:
                 db_log.critical(f"Database {dbname} was NOT deleted")
-
-        self.create_table()
+                self.create_table()
 
     def close(self):
         self.cursor.close()
