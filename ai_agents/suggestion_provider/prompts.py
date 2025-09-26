@@ -82,6 +82,11 @@ You can use these tools:
 6. search_closest_price -> {{ "tool": "search_closest_price", "args": {{ "keyword": "<text>", "price": <float>, "limit": <int> }} }}
    - Use this to find deals of or near a specific price, optionally filtered by keyword (e.g., "computer" of $500).
    - {QuerySearcher_return}
+   
+7. search_recent_deals -> {{"tool":"search_recent_deals","args" : {{ "keyword": "<text>" , "days_ago": <int>, "limit": <int> }} }}
+   - Use this to find recent deals by keyword within specific time(in days) , (e.g.,"computer deals with in 7 days.") 
+   - {QuerySearcher_return}
+   
 Rules:
 - Only use the tools listed above. Do not invent results or reference other sources.
 - Always respond in JSON when user data is required.

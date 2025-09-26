@@ -1,4 +1,5 @@
 from manage_db.db_manager import PostgresDB
+from datetime import datetime,timedelta
 
 class QuerySearcher:
     def __init__(self):
@@ -46,6 +47,18 @@ class QuerySearcher:
         rows = self.cursor.fetchall()
         return [dict(row) for row in rows]
 
+    def search_recent_deals(self,keyword: str , days_ago: int , limit:int = 10):
+        """Search for recent deals with title"""
+        cutoff_date = datetime.now() - timedelta(days=days_ago)
+        self.cursor.execute("""
+            SELECT * FROM listings
+            WHERE title ILIKE %s AND time_stamp >= %s
+            ORDER BY time_stamp DESC
+            LIMIT %s 
+        """,(f"%{keyword}%",cutoff_date,limit))
+        rows = self.cursor.fetchall()
+        return [dict(row) for row in rows]
+
 if __name__ == "__main__":
 
     # ----TESTS----
@@ -56,6 +69,7 @@ if __name__ == "__main__":
     url_results = tool.search_by_url(url)
     under_price_results = tool.search_under_price("computer",max_price=700,limit=2)
     closest_price_results = tool.search_closest_price("iphone",price=600,limit=2)
+    recent_deals = tool.search_recent_deals("iphone",14,10)
 
     import pprint
 
@@ -67,3 +81,6 @@ if __name__ == "__main__":
     pp.pprint(under_price_results)
     print("\n" + 30 * "-under_results-" + "\n")
     pp.pprint(closest_price_results)
+    print("\n" + 30 * "-closest_price-" + "\n")
+    pp.pprint(recent_deals)
+
