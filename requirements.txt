@@ -9,3 +9,7 @@ langchain
 langchain_ollama
 psycopg2
 python-dotenv
+sqlalchemy
+matplotlib
+seaborn
+plotly

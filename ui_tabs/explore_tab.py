@@ -7,7 +7,6 @@ from manage_db.db_manager import PostgresDB
 
 
 def render():
-    # fixme: may need to switch to SQLAlchemy.
 
     if st.button("Show or Refresh Table", key="refresh_table"):
         db = PostgresDB()
@@ -21,7 +20,8 @@ def render():
                 AND time_stamp >= %s
                 ORDER BY time_stamp DESC
             """
-        df = pd.read_sql(query, db.conn, params=[two_weeks_ago])
+        engine = db.get_db_engine()
+        df = pd.read_sql(query, engine, params=(two_weeks_ago,))
 
         st.subheader("🔥 Recent 79%+ Discount Deals")
         st.dataframe(df, use_container_width=True)
@@ -35,7 +35,7 @@ def render():
                 ORDER BY time_stamp DESC
                 LIMIT 100
             """
-        fallback_df = pd.read_sql(fallback_query, db.conn, params=[two_weeks_ago])
+        fallback_df = pd.read_sql(fallback_query,engine, params=(two_weeks_ago,))
 
         st.subheader("🧮 Other Recent Deals")
         st.dataframe(fallback_df, use_container_width=True)

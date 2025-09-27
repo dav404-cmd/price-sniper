@@ -1,13 +1,13 @@
 import streamlit as st
 
 #tabs
-from ui_tabs import scrape_tab,explore_tab,searcher_tab,agent_tab
+from ui_tabs import scrape_tab,explore_tab,searcher_tab,agent_tab,visualization_tab
 
 st.set_page_config(layout="wide")
 
 st.header("Price Sniper")
 
-tab1,tab2,tab4,tab3 = st.tabs(["Scrape Data","Explore Data","Find Data","Sales assistant."])
+tab1,tab2,tab4,tab3,tab5 = st.tabs(["Scrape Data","Explore Data","Find Data","Sales assistant.","Data Visualization"])
 
 with tab1:
 
@@ -25,9 +25,6 @@ with tab3:
 
     agent_tab.render()
 
+with tab5:
 
-
-
-
-
-
+    visualization_tab.render()

@@ -3,6 +3,7 @@ from psycopg2.extras import execute_values, RealDictCursor
 from utils.logger import get_logger
 import os
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 db_log = get_logger("Postgres_Manager")
 
 load_dotenv()
@@ -116,7 +117,7 @@ class PostgresDB:
         if readable:
             for row in rows:
                 print(
-                    f"{row['id']:3} | {row['title'][:40]:40} | ${row['price']:8.2f} | {row['discount_percentage']:5.1f}% | {row['scraped_at']} | {row['time_stamp']} | {row['url']}")
+                    f"{row['id']:3} | {row['title'][:40]:40} | ${row['claimed_orig_price']:8.2f} | ${row['price']:8.2f} | ${row['discount']:8.2f} | {row['discount_percentage']:5.1f}% | {row['store']} | {row['category']} | {row['scraped_at']} | {row['time_stamp']} | {row['url']}")
 
         return rows
 
@@ -144,6 +145,45 @@ class PostgresDB:
         """, (category, limit))
         rows = self.cursor.fetchall()
         return [dict(r) for r in rows]
+
+    def invalid_rows(self):
+        self.cursor.execute("""
+            SELECT id, title, price, claimed_orig_price,discount_percentage, store, url
+            FROM listings
+            WHERE claimed_orig_price <= 0
+            OR discount_percentage > 100;
+        """)
+        rows = self.cursor.fetchall()
+        rows = [dict(row) for row in rows]
+
+        if not rows:
+            db_log.info("[INFO] No invalid rows found")
+        else:
+            db_log.warning(f"[INFO] Found {len(rows)} invalid rows:")
+            for r in rows:
+                print(
+                    f"{r['id']:4} | {r['title'][:40]:40} | price=${r['price']:.2f} | orig=${r['claimed_orig_price']:.2f} | discount=%{r['discount_percentage']:.2f} | {r['store']} | {r['url']}")
+
+
+    #accesses
+    @staticmethod
+    def get_db_engine():
+        dbname = os.getenv("DB_NAME")
+        user = os.getenv("DB_USER")
+        password = os.getenv("DB_PASSWORD")
+        host = os.getenv("DB_HOST")
+        port = os.getenv("DB_PORT")
+
+        # Replace with your actual credentials
+        engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{dbname}")
+        try:
+            with engine.connect() as conn:
+                pass
+        except Exception as e:
+            print(f"Connection to  {dbname} failed , error : {e}")
+        return engine
+
+
 
 if __name__ == "__main__":
     db = PostgresDB()
