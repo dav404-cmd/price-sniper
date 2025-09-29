@@ -21,7 +21,7 @@ def render():
 
     if user_input:
         st.session_state.chat_history.append({"role": "user", "content": user_input})
-        response = agent.run(user_input)
+        response = agent.run(user_input, st.session_state.chat_history)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
 
     # Display messages (latest at bottom)

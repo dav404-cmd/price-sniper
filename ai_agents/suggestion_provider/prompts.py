@@ -4,51 +4,40 @@ You can search deals from a database through provided search tools (search_by_ur
 Do remember to provide the names of the tools you used."""
 
 Example_return = """
-🛒 Deal Summary: NXT Technologies UC-4000 Headset
+🛒 Deal Summary: <Product Title>
 
-- **Product**: NXT Technologies UC-4000 Noise-Canceling Stereo USB Computer Headset (Black)
-- **Price**: $11.99  
-- **Original Price**: $39.99  
-- **You Save**: $28.00 (70.02% off)
-- **Store**: Woot!
-- **Category**: Tech
-- **Posted On**: August 13, 2025
-- **Scraped On**: August 27, 2025
-- **Deal URL**: https://slickdeals.net/f/18516907-nxt-technologies-uc-4000-noise-canceling-stereo-usb-computer-headset-black-11-99-free-shipping-w-prime
+💰 Price & Discount Information:
+- **Price**: <price>
+- **Original Price**: <claimed_orig_price>
+- **You Save**: <discount> (<discount_percentage>% off)
+- **Store**: <store>
+- **Category**: <category>
+- **Posted On**: <time_stamp>
+- **Scraped On**: <scraped_at>
+- **Deal URL**: <url>
 
-📝 Quick points :
-This USB headset is designed for clear communication and immersive audio. Key features include:
-- Noise-canceling microphone for clearer calls
-- Stereo sound for meetings, music, and casual gaming
-- USB plug-and-play compatibility
-- Adjustable headband and cushioned ear cups for comfort
-- Ideal for remote work, online classes, and budget-conscious users
+📝 Key Points / Product Overview:
+<highlight features, context, or why this deal is good>
 
-📝 Product Overview (Enhanced for Suggestion Context)
-This budget-friendly USB headset punches above its price point, making it a smart pick for remote workers, students, and casual gamers.
-With a noise-canceling mic and stereo sound, it’s built for clear calls and immersive audio. The plug-and-play USB setup means zero
-driver hassle, and the cushioned design ensures comfort during long sessions. At 70% off, it’s a steal for anyone needing reliable
-audio without breaking the bank.
-
-🛠️ Tool used: search_under_price
-
-\n\n
+🛠️ Tools used: <list_of_tools>
 """
-QuerySearcher_return = """
-    - Returns: A dictionary with fields like 
-        id,
-        title,
-        price,
-        claimed_orig_price,
-        discount,
-        discount_percentage,
-        store,
-        category,
-        time_stamp,
-        url,
-        scraped_at
 
-    - Use all the fields data if you can. 
+QuerySearcher_return = """
+    Returns a dictionary with fields:
+   - id: int
+   - title: string
+   - price: float
+   - claimed_orig_price: float
+   - discount: float
+   - discount_percentage: float
+   - store: string
+   - category: string
+   - time_stamp: timestamp
+   - url: string
+   - scraped_at: timestamp
+
+
+    Use all the fields data . 
     """
 
 DeepScraper_scheme = """
@@ -92,5 +81,5 @@ Rules:
 - Always respond in JSON when user data is required.
 - You may return an array of tool calls if multiple tools are needed.
 - Provide all useful data (eg. discounted price , price , discount percentage,store etc.)
-- Always provide url of deals if url exists in data provided by tools.
+- !! Always provide url of deals.
 """

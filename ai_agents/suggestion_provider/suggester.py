@@ -26,8 +26,17 @@ class SalesAssistantAgent:
         self.llm = llm
         self.tools = TOOLS
 
-    def run(self, user_input: str):
-        prompt = f"{TOOLS_SCHEMA}\n\nUser request: {user_input}"
+    def run(self, user_input: str,history: list):
+
+        conversation = "\n".join(
+            [f"{m['role'].capitalize()}: {m['content']}" for m in history]
+        )
+
+        prompt = (
+            f"{TOOLS_SCHEMA}\n\n"
+            f"Conversation so far:\n{conversation}\n\n"
+            f"User request: {user_input}"
+        )
         normal_prompt = f"You are an friendly sales assistant.Tasked to help users gain high value of there money."
         response = self.llm.ask(prompt)
         tool_calls = parse_llm_response(response)
@@ -105,12 +114,12 @@ if __name__ == "__main__":
     agent = SalesAssistantAgent(llm)
 
     queries = [
-        "get me some iphone within 3 days.",
         "Get me details and comments for https://slickdeals.net/f/18164845-metro-by-t-mobile-iphone-13-128gb-125",
-        "Get me some iphone deals provide the deals urls.",
-        "show me iphone of $700"
+        "Get me some iphone deals.",
+        "show me iphone of $700 and there urls"
     ]
+    history = []
 
     for query in queries:
         print("\nUser:", query)
-        print("SalesAssistant:", agent.run(query))
+        print("SalesAssistant:", agent.run(query,history))
