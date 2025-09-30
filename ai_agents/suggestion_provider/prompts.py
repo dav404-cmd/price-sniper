@@ -3,25 +3,6 @@ You can scrape data from slick deals through provided scraping tools(scrape_comm
 You can search deals from a database through provided search tools (search_by_url,search_by_title,search_under_price,etc).
 Do remember to provide the names of the tools you used."""
 
-Example_return = """
-🛒 Deal Summary: <Product Title>
-
-💰 Price & Discount Information:
-- **Price**: <price>
-- **Original Price**: <claimed_orig_price>
-- **You Save**: <discount> (<discount_percentage>% off)
-- **Store**: <store>
-- **Category**: <category>
-- **Posted On**: <time_stamp>
-- **Scraped On**: <scraped_at>
-- **Deal URL**: <url>
-
-📝 Key Points / Product Overview:
-<highlight features, context, or why this deal is good>
-
-🛠️ Tools used: <list_of_tools>
-"""
-
 QuerySearcher_return = """
     Returns a dictionary with fields:
    - id: int

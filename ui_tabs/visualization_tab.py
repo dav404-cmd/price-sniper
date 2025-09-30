@@ -78,10 +78,6 @@ def render():
         query = "SELECT * FROM listings"
         df = pd.read_sql(query, engine)
 
-        st.subheader("Average Discount % per Store")
-
-
-
         with vis_tab1:
             top_n = st.slider("Show top N stores", 5, 30, 10,key = "slider_1")
             avg_disc = (
@@ -101,6 +97,7 @@ def render():
 
             st.plotly_chart(fig, use_container_width=True)
 
+            st.subheader("Average Discount % per Store")
             st.dataframe(avg_disc)
 
 
@@ -128,6 +125,7 @@ def render():
             fig.update_layout(yaxis_range=[0, 100])
             st.plotly_chart(fig, use_container_width=True)
 
+            st.subheader("Average Discount % per Store")
             st.dataframe(avg_disc)
 
 

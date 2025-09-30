@@ -1,7 +1,7 @@
 import json
 from ai_agents.suggestion_provider.tools.deepscraper_tool import DeepScraper
 from ai_agents.suggestion_provider.tools.querysearch_tools import QuerySearcher
-from ai_agents.suggestion_provider.prompts import TOOLS_SCHEMA,Example_return,context
+from ai_agents.suggestion_provider.prompts import TOOLS_SCHEMA,context
 from ai_agents.suggestion_provider.utils_fuctions import parse_llm_response,classify_intent
 from data.data_cleaner.date_formating import json_serializable
 # Initialize tools
@@ -89,7 +89,7 @@ class SalesAssistantAgent:
                 "The following tool results were obtained:\n\n" +
                 "\n\n".join(annotated_results) +
                 "\n\nPlease summarize clearly for the user, and mention which tools were used."
-                "\n\nExample output: "+ Example_return + "use this format if possible"
+                "\n\nPlease also provide the url of the deals."
         )
         return self.llm.ask(followup_prompt)
 

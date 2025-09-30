@@ -11,10 +11,19 @@ CSV_PATH = "data/raw/cate_based_deals.csv"
 def _load_scraped_table():
     """Helper: Load scraped CSV into session state"""
     if os.path.exists(CSV_PATH) and os.path.getsize(CSV_PATH) > 0:
-        df = pd.read_csv(CSV_PATH)
-        st.session_state.setdefault("scraped_table", df)
+        try:
+            df = pd.read_csv(CSV_PATH)
+            if not df.empty:
+                st.session_state.setdefault("scraped_table", df)
+            else:
+                st.warning("CSV exists but is empty.")
+        except pd.errors.EmptyDataError:
+            st.warning("CSV file is invalid or has no columns.")
+        except Exception as e:
+            st.error(f"Failed to load CSV: {e}")
     elif os.path.exists(CSV_PATH) and os.path.getsize(CSV_PATH) <= 0:
-        st.warning("NO data found.")
+        st.warning("CSV file is empty (0 bytes).")
+
 
 @st.cache_data
 def _load_category_data():
