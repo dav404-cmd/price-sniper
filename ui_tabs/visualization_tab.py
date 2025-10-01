@@ -18,8 +18,8 @@ def render():
 
         df = pd.read_sql(query, engine)
 
-        col1,col2 = st.columns(2)
         min_disc, max_disc = st.slider("Filter by discount %", 0, 100, (50, 100))
+        col1,col2 = st.columns(2)
 
         with col1:
             store_options = df['store'].value_counts().nlargest(10).index.tolist()

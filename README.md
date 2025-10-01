@@ -100,6 +100,12 @@ streamlit run ui.py
   
 ---
 
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
 ## Author
 
 Created by [dav404-cmd](https://github.com/dav404-cmd) - feel free to contact for questions, suggestions, or collaboration opportunities.
