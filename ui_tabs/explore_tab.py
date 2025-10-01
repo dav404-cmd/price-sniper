@@ -23,8 +23,11 @@ def render():
         engine = db.get_db_engine()
         df = pd.read_sql(query, engine, params=(two_weeks_ago,))
 
-        st.subheader("🔥 Recent 79%+ Discount Deals")
-        st.dataframe(df, use_container_width=True)
+        if df.empty:
+            st.info("No recent deals with 79%+ discount found in the last 14 days.Try scraping something.")
+        else:
+            st.subheader("🔥 Recent 79%+ Discount Deals")
+            st.dataframe(df, use_container_width=True)
 
         st.divider()
 
@@ -37,7 +40,10 @@ def render():
             """
         fallback_df = pd.read_sql(fallback_query,engine, params=(two_weeks_ago,))
 
-        st.subheader("🧮 Other Recent Deals")
-        st.dataframe(fallback_df, use_container_width=True)
+        if fallback_df.empty:
+            st.warning("No other recent deals found.Try scraping something.")
+        else:
+            st.subheader("🧮 Other Recent Deals")
+            st.dataframe(fallback_df, use_container_width=True)
 
         db.close()
