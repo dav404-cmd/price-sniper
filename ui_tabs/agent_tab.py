@@ -1,11 +1,39 @@
 import streamlit as st
-from ai_agents.suggestion_provider.suggester import DummyLLM , SalesAssistantAgent
+from ai_agents.suggestion_provider.suggester import DummyLLM, OpenRouterLLM, SalesAssistantAgent
 
-llm = DummyLLM()
-agent = SalesAssistantAgent(llm)
 
 def render():
+    llm_mode = st.radio(
+        "Run LLM by:",
+        ["Api mode", "Local mode"],
+        index=["Api mode", "Local mode"].index(st.session_state.get("llm_mode", "Api mode"))
+    )
+
+    # Only update agent if mode changed or agent not initialized
+    if "agent" not in st.session_state or st.session_state.llm_mode != llm_mode:
+        if llm_mode == "Api mode":
+            llm = OpenRouterLLM()
+            agent_info = {
+                "name": "OpenRouterLLM",
+                "description": "Running via OpenRouter API. Requires valid API key and credits."
+            }
+        else:
+            llm = DummyLLM()
+            agent_info = {
+                "name": "DummyLLM (local)",
+                "description": "Running locally. Requires llama3 installed on your machine."
+            }
+
+        st.session_state.agent = SalesAssistantAgent(llm)
+        st.session_state.agent_info = agent_info
+        st.session_state.llm_mode = llm_mode  # Update after agent setup
+
+    agent = st.session_state.agent
+
+    # Header + Mode Info
     st.header("🛍️ AI Sales Assistant")
+    st.write(f"**Current LLM:** `{st.session_state.agent_info['name']}`")
+    st.caption(st.session_state.agent_info["description"])
 
     # Initialize chat history
     if "chat_history" not in st.session_state:
@@ -27,4 +55,5 @@ def render():
     # Display messages (latest at bottom)
     with messages_container:
         for msg in st.session_state.chat_history:
-            st.chat_message(msg["role"]).markdown(msg["content"])
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])

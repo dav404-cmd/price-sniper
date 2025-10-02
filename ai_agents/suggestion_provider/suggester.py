@@ -1,4 +1,7 @@
 import json
+import requests
+import os
+
 from ai_agents.suggestion_provider.tools.deepscraper_tool import DeepScraper
 from ai_agents.suggestion_provider.tools.querysearch_tools import QuerySearcher
 from ai_agents.suggestion_provider.prompts import TOOLS_SCHEMA,context
@@ -97,6 +100,7 @@ class SalesAssistantAgent:
 import subprocess
 
 class DummyLLM:
+    """run locally"""
     def __init__(self, model="llama3"):
         self.model = model
 
@@ -108,9 +112,44 @@ class DummyLLM:
         )
         return process.stdout.decode("utf-8").strip()
 
+class OpenRouterLLM:
+    """run through api."""
+    def __init__(self, model="x-ai/grok-4-fast:free"):
+        self.model = model
+        self.api_key = os.getenv("OPENROUTER_API_KEY")
+
+    def ask(self, prompt: str) -> str:
+        if not self.api_key:
+            return "Error: OPENROUTER_API_KEY not found in environment."
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+        try:
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            return f"Error calling OpenRouter API: {str(e)}"
+
 # ----- Example Usage -----
 if __name__ == "__main__":
-    llm = DummyLLM()
+    llm = OpenRouterLLM()
     agent = SalesAssistantAgent(llm)
 
     queries = [

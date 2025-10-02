@@ -1,7 +1,6 @@
 # Smart Price Sniper
 
-A Python tool that extracts deal data from **Slickdeals** and helps users find the best value for their money.  
-It can be used for personal deal tracking, analytics, or research.
+Smart Price Sniper is a full-stack project that scrapes live deal data from Slickdeals, stores it in PostgreSQL, and lets users explore it through an interactive Streamlit dashboard and optional AI-powered search agents.
 
 ---
 
@@ -10,7 +9,7 @@ It can be used for personal deal tracking, analytics, or research.
 - **Fast Scraper**: Extracts product titles, prices, discounts, store names, and links using `requests` + `BeautifulSoup`.
 - **Database Storage**: Saves pre-cleaned deal data into **PostgreSQL** for structured analysis.
 - **Streamlit Dashboard**: Interactive UI with filtering, search, and visualizations (e.g., top stores by average discount).
-- **AI Agent**: Uses LLaMA3 (Optional) with tools:
+- **AI Agent**: Uses LLaMA3 locally(Optional) or through openrouter api with tools:
   - *Query Searcher*: Search deals by keywords ,price or freshness in the database.
   - *Deep Scraper*: Scrape additional info like description and comments directly from deal URLs.
 - **Lightweight & Modular**: Easy to extend with new data sources or features.
@@ -23,7 +22,7 @@ It can be used for personal deal tracking, analytics, or research.
 
 - **AI Agent Example**: Querying deals by keywords
     <br><br>
-  ![AI Agent Screenshot](docs/images/agent.png)
+  ![AI Agent Screenshot](docs/images/agent_updated.png)
 
 ## Project Structure
 
@@ -67,8 +66,16 @@ smart-price-sniper/
     ```
 
 3. **Set up your environment variables:**
-    - Copy `.env.example` to `.env` and fill in your PostgreSQL credentials.
-
+   - Copy the example below to `.env` and fill in your PostgreSQL credentials.
+   - Example :
+   ```text
+   DB_NAME = your_db_name
+   DB_USER = your_db_username
+   DB_PASSWORD = your_db_password
+   DB_HOST = your_db_host
+   DB_PORT = your_db_port  
+   OPENROUTER_API_KEY = your_openrouter_api(optionally,you can just use local llm)    
+    ```
 ### Usage
 
 #### Launch the Web App
@@ -100,11 +107,19 @@ streamlit run ui.py
   
 ---
 
+## Deployment
+This project is deployed in streamlit cloud community with its database in supabase.
+
+😊Check it out [Here](https://smart-price-sniper.streamlit.app/).<br>
+😉Every time you scrape something in there the database will expand.
+---
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
+
 
 ## Author
 
