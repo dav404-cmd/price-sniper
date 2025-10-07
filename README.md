@@ -9,10 +9,12 @@ Smart Price Sniper is a full-stack project that scrapes live deal data from Slic
 - **Fast Scraper**: Extracts product titles, prices, discounts, store names, and links using `requests` + `BeautifulSoup`.
 - **Database Storage**: Saves pre-cleaned deal data into **PostgreSQL** for structured analysis.
 - **Streamlit Dashboard**: Interactive UI with filtering, search, and visualizations (e.g., top stores by average discount).
-- **AI Agent**: Uses LLaMA3 locally(Optional) or through openrouter api with tools:
+- **AI Agent**: Uses LLaMA3 locally(Optional) or via the OpenRouter API, with the following tools::
   - *Query Searcher*: Search deals by keywords ,price or freshness in the database.
   - *Deep Scraper*: Scrape additional info like description and comments directly from deal URLs.
 - **Lightweight & Modular**: Easy to extend with new data sources or features.
+- **Automation Workflow**: End-to-end orchestration using **Apache Airflow** for scheduled scraping and data updates.
+- **Containerized Airflow Environment**: Airflow runs locally inside **Docker containers** for easy setup, isolation, and reproducibility.
 
 ---
 ## Screenshots
@@ -28,6 +30,7 @@ Smart Price Sniper is a full-stack project that scrapes live deal data from Slic
 
 ```text
 smart-price-sniper/
+├── airflow-orchestrator/ #containeriozed automated workflow (airflow,docker)
 ├── ai_agents/ # AI assistant tools and logic (LLaMA3 integration)
 ├── scraper/ # Slickdeals scraper (BeautifulSoup + requests)
 ├── manage_db/ # PostgreSQL database management
@@ -51,6 +54,11 @@ smart-price-sniper/
 - Python 3.8+
 - PostgreSQL database (connection set via `.env`)
 - [pip](https://pip.pypa.io/en/stable/) for dependencies
+- [ollama](https://llamaimodel.com/download/) for local llm use
+    - After installing ollama run the following bash to install llama3. 
+    ```bash
+     ollama run llama3
+   ```
 
 ### Installation
 
@@ -66,7 +74,7 @@ smart-price-sniper/
     ```
 
 3. **Set up your environment variables:**
-   - Copy the example below to `.env` and fill in your PostgreSQL credentials.
+   - Copy the example below to `.env` and fill in your credentials.
    - Example :
    ```text
    DB_NAME = your_db_name
@@ -106,12 +114,87 @@ streamlit run ui.py
     to scrape by categories or search, switch the `category = ""` or `query = ""` with what you want to scrape and `max_page = `as in how many pages to scrape.
   
 ---
+## Airflow Automation Setup (Docker)
+This project includes a fully automated data pipeline powered by Apache Airflow and Docker.
+It handles scheduled scraping, AI-assisted categorization (via LLaMA3), and database updates without manual triggering.
+While currently limited to a single DAG that scrapes any keyword daily, the system is designed with modularity in mind, allowing for easy expansion and integration of additional features.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop/)
+- wsl (if you are on window)
+  ```bash
+  wsl --install
+  ```
+
+### Directory Structure
+```text
+smart-price-sniper/
+├── airflow-orchestrator/
+│   ├── airflow_env/           # Local virtual env for airflow + docker setup
+│   ├── dags/                  # Your DAG files
+│   ├── logs/                  # Airflow logs
+│   ├── plugins/               # Custom operators/hooks (optional)
+│   ├── Dockerfile             # Airflow image build
+│   ├── docker-compose.yaml    # Airflow + Postgres setup
+│   └── .env                   # Airflow-related environment variables
+```
+
+### Environment Variables
+- Copy the example below to `airflow-orchestrator/.env` and fill in your credentials.
+   - Example :
+   ```text
+  FERNET_KEY= get your fernet key from instruction bellow 
+
+  AIRFLOW_FIRST_NAME = your airflow first name 
+  AIRFLOW_LAST_NAME = your airflow last name
+  AIRFLOW_EMAIL = your airflow email
+   ```
+  - FERNET_KEY :
+     - Get your FERNET_KEY by running the following bash.
+     ```bash
+    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+     ```
+---
+
+### Running the Airflow Pipeline
+
+1. Initialize Airflow and build containers:
+    ```bash
+    docker compose -f airflow-orchestrator/docker-compose.yaml up airflow-init
+    ```
+
+2. Start all services:
+    ```bash
+    docker compose -f airflow-orchestrator/docker-compose.yaml up
+    ```
+
+3. Access the Airflow web UI at:
+    ```text
+   http://localhost:8080
+    ```
+   - **Username**: admin
+   - **Password**: admin
+
+4. Close services:
+    ```bash
+   docker compose -f airflow-orchestrator/docker-compose.yaml down
+    ```
+
+---
+
+### 🧭 Future Plans
+- Add email alerts if desired deals are found.
+- Expansion data sources.
+
+---
 
 ## Deployment
 This project is deployed in streamlit cloud community with its database in supabase.
 
 😊Check it out [Here](https://smart-price-sniper.streamlit.app/).<br>
 😉Every time you scrape something in there the database will expand.
+
 ---
 
 ## License
