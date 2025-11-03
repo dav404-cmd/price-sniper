@@ -113,18 +113,19 @@ class DummyLLM:
         return process.stdout.decode("utf-8").strip()
 
 class OpenRouterLLM:
-    """run through api."""
-    def __init__(self, model="x-ai/grok-4-fast:free"):
+    def __init__(self, model="minimax/minimax-m2:free"):
+        """run through api."""
         self.model = model
         self.api_key = os.getenv("OPENROUTER_API_KEY")
+        if not self.api_key:
+            raise ValueError("OPENROUTER_API_KEY not found in environment")
 
     def ask(self, prompt: str) -> str:
-        if not self.api_key:
-            return "Error: OPENROUTER_API_KEY not found in environment."
-
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/dav404-cmd/price-sniper",
+            "X-Title": "Price Sniper"
         }
 
         payload = {
@@ -144,6 +145,8 @@ class OpenRouterLLM:
             )
             response.raise_for_status()
             return response.json()["choices"][0]["message"]["content"].strip()
+        except requests.exceptions.HTTPError as e:
+            return f"HTTP Error: {e.response.text}"
         except Exception as e:
             return f"Error calling OpenRouter API: {str(e)}"
 

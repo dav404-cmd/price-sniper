@@ -6,6 +6,7 @@ lxml
 streamlit
 langchain
 langchain_ollama
+langchain_core
 psycopg2-binary
 python-dotenv
 sqlalchemy

@@ -1,5 +1,5 @@
 from langchain_ollama import OllamaLLM
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from pathlib import Path
 import json
 
